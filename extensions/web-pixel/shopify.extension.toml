@@ -7,10 +7,7 @@ runtime_context = "strict"
 [settings]
 type = "object"
 
-[settings.fields.accountID]
-name = "Account ID"
-description = "Account ID"
+[settings.fields.ph_project_api_key]
+name = "Posthog Project API Key"
+description = "ph_project_api_key"
 type = "single_line_text_field"
-validations =  [
-  { name = "min", value = "1" }
-]
