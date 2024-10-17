@@ -7,6 +7,7 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
 import prisma from "./db.server";
+import { webPixelCreate } from './common.server/queries/web-pixel-create';
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -18,6 +19,15 @@ const shopify = shopifyApp({
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
   restResources,
+  isEmbeddedApp: true,
+  hooks: {
+    afterAuth: async ({ session, admin }) => {
+            console.log('after auth') ;
+            await webPixelCreate(admin.graphql, {
+              ph_project_api_key: 'phc_pO8qo4XkzmJkWrr08pgCtIX5me8u48uRxenJpChBnpU',
+            })
+      },
+    },
   future: {
     unstable_newEmbeddedAuthStrategy: true,
   },

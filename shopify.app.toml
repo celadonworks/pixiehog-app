@@ -3,37 +3,32 @@
 client_id = "dccee050afcd89238a3d924aa7608d5c"
 name = "Posthog Analytics"
 handle = "posthog-analytics"
-application_url = "https://example.com/"
+application_url = "https://recent-construction-princeton-competition.trycloudflare.com"
 embedded = true
 
 [build]
+automatically_update_urls_on_dev = true
+dev_store_url = "celadonworksdev.myshopify.com"
 include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_pixels,read_customer_events"
+scopes = "read_customer_events,write_pixels"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://recent-construction-princeton-competition.trycloudflare.com/auth/callback",
+  "https://recent-construction-princeton-competition.trycloudflare.com/auth/shopify/callback",
+  "https://recent-construction-princeton-competition.trycloudflare.com/api/auth/callback"
+]
 
 [webhooks]
 api_version = "2024-07"
 
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/customers/data_request"
-  compliance_topics = [ "customers/data_request" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/customers/redact"
-  compliance_topics = [ "customers/redact" ]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks/shop/redact"
-  compliance_topics = [ "shop/redact" ]
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
+[app_proxy]
+url = "https://recent-construction-princeton-competition.trycloudflare.com"
+subpath = "ph-analytics"
+prefix = "tools"
 
 [pos]
 embedded = false
