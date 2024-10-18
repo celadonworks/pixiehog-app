@@ -38,7 +38,7 @@ register(async (extensionApi) => {
     };
   }
   async function resolveDistinctId() {
-    const WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY = `web_pixel_ph_phc_${ph_project_api_key}_posthog_distinct_id`;
+    const WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY = `web_pixel_ph_${ph_project_api_key}_posthog_distinct_id`;
     const webPostHogPersisted = (await localStorage.getItem(`ph_phc_${ph_project_api_key}_posthog`)) as {
       distinct_id: string;
     } | null;
