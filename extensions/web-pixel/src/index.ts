@@ -1,4 +1,5 @@
-import { CustomerPrivacyPayload, register } from '@shopify/web-pixels-extension';
+import type { CustomerPrivacyPayload} from '@shopify/web-pixels-extension';
+import { register } from '@shopify/web-pixels-extension';
 import type { WebPixelSettings } from './interface/interface';
 import { PostHog } from 'posthog-node';
 import { v7 as uuidv7 } from 'uuid';
@@ -20,7 +21,6 @@ register(async (extensionApi) => {
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
   const hostname = init.context.document.location.hostname;
   const posthogHost = `https://${hostname}/tools/ph-analytics`;
-  console.log('1.0.7');
   const posthog = new PostHog(ph_project_api_key, {
     fetch: fetch,
     host: 'https://eu.i.posthog.com',
@@ -38,75 +38,72 @@ register(async (extensionApi) => {
     };
   }
   async function resolveDistinctId() {
-    const WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY = `web_pixel_ph_${ph_project_api_key}_posthog_distinct_id`;
-    const webPostHogPersisted = (await localStorage.getItem(`ph_${ph_project_api_key}_posthog`)) as {
+    const POSTHOG_KEY = `ph_${ph_project_api_key}_posthog`;
+    const webPostHogPersistedString = await localStorage.getItem(POSTHOG_KEY);
+    const webPostHogPersisted: {
       distinct_id: string;
-    } | null;
-
-    const localStorageDistinctId = await localStorage.getItem(WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY);
-
-    if (webPostHogPersisted?.distinct_id && localStorageDistinctId) {
-      posthog.alias({
-        distinctId: webPostHogPersisted.distinct_id,
-        alias: localStorageDistinctId,
-      });
-    }
-
-    if (localStorageDistinctId) {
-      return localStorageDistinctId;
-    }
+    } | null = webPostHogPersistedString ? JSON.parse(webPostHogPersistedString) : null;
 
     if (webPostHogPersisted?.distinct_id) {
-      await localStorage.setItem(WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY, webPostHogPersisted?.distinct_id);
       return webPostHogPersisted?.distinct_id;
     }
 
     const distinct_id = uuidv7();
-    await localStorage.setItem(WEB_PIXEL_POSTHOG_DISTINCT_ID_KEY, distinct_id);
+    await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
     return distinct_id;
-  };
+  }
+  
+
+  const events = {
+    cart_viewed: 'cart',
+    checkout_address_info_submitted: 'checkout',
+    checkout_completed: 'checkout',
+    checkout_contact_info_submitted: 'checkout',
+    checkout_shipping_info_submitted: 'checkout',
+    checkout_started: 'checkout',
+    collection_viewed: 'collection',
+    page_viewed: null ,
+    payment_info_submitted: 'checkout',
+    product_added_to_cart: 'cartLine',
+    product_removed_from_cart: 'cartLine',
+    product_viewed: 'productVariant',
+    search_submitted: 'searchResult',
+  } ;
   customerPrivacy.subscribe('visitorConsentCollected', (event) => {
     customerPrivacyStatus = event.customerPrivacy;
   });
-  analytics.subscribe(
-    'page_viewed',
-    preprocessEvent(async (event) => {
-      posthog.capture({
-        distinctId: await resolveDistinctId(),
-        event: event.name,
-        properties: {
-          ...event.data,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-        },
-      });
-    })
-  );
-
-  analytics.subscribe(
-    'checkout_contact_info_submitted',
-    preprocessEvent(async (event) => {
-      if (event.data.checkout.email) {
+  for (const [key,value] of Object.entries(events)) {
+    analytics.subscribe(key,preprocessEvent(async(event ) => {
+      const distinct_id = await resolveDistinctId()
+      if (value == "checkout" && event.data[value].email) {
         posthog.identify({
-          distinctId: await resolveDistinctId(),
+          distinctId: distinct_id,
           properties: {
-            email: event.data.checkout.email,
+            email: event.data[value].email,
             url: event.context.document.location.href,
             $current_url: event.context.document.location.href,
-          },
-        });
+          }
+        })
+      }else{
+        posthog.identify({
+          distinctId: distinct_id,
+          properties: {
+            email: event.init.data?.customer?.email,
+            url: event.context.document.location.href,
+            $current_url: event.context.document.location.href,
+          }
+        })
       }
-      await posthog.flush();
       posthog.capture({
-        distinctId: await resolveDistinctId(),
+        distinctId: distinct_id,
         event: event.name,
         properties: {
-          ...event.data.checkout,
-          email: undefined,
+          ...(event.data[value] ? event.data[value] :  event.data),
           url: event.context.document.location.href,
           $current_url: event.context.document.location.href,
         },
       });
-    })
-  );
+    }));
+  }
+
 });
