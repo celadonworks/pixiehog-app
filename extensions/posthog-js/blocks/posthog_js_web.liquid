@@ -1,0 +1,164 @@
+<script>
+    (() => {
+        if (posthog || window.posthog) {
+        throw Error('[ph-analytics]: Posthog has already been initialized')
+    }
+
+        /* eslint-disable no-unused-expressions */
+        !(function (t, e) {
+        var o, n, p, r;
+        e.__SV ||
+            ((window.posthog = e),
+            (e._i = []),
+            (e.init = function (i, s, a) {
+            function g(t, e) {
+                var o = e.split(".");
+                2 == o.length && ((t = t[o[0]]), (e = o[1])),
+                (t[e] = function () {
+                    t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+                });
+            }
+            ((p = t.createElement("script")).type = "text/javascript"),
+                (p.crossOrigin = "anonymous"),
+                (p.async = !0),
+                (p.src =
+                s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") +
+                "/static/array.js"),
+                (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r);
+            var u = e;
+            for (
+                void 0 !== a ? (u = e[a] = []) : (a = "posthog"),
+                u.people = u.people || [],
+                u.toString = function (t) {
+                    var e = "posthog";
+                    return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e;
+                },
+                u.people.toString = function () {
+                    return u.toString(1) + ".people (stub)";
+                },
+                o =
+                    "init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(
+                    " "
+                    ),
+                n = 0;
+                n < o.length;
+                n++
+            )
+                g(u, o[n]);
+            e._i.push([i, s, a]);
+            }),
+            (e.__SV = 1));
+        })(document, window.posthog || []);
+        const apiKey = "{{ api.metafields.ph_analytics.ph_key }}";
+
+        if (!apiKey) {
+            throw Error('[ph-analytics]: Posthog apiKey is not set');
+        }
+        {% comment %}  
+        /**
+         * @typedef {Object} PostHogJsWebConfig
+         * @property {string} api_host
+         * @property {string} [api_method]
+         * @property {'XHR' | 'fetch'} [api_transport]
+         * @property {string | null} ui_host
+         * @property {string} token
+         * @property {boolean | AutocaptureConfig} autocapture
+         * @property {boolean} rageclick
+         * @property {boolean} cross_subdomain_cookie
+         * @property {'localStorage' | 'cookie' | 'memory' | 'localStorage+cookie' | 'sessionStorage'} persistence
+         * @property {string} persistence_name
+         * @property {string} [cookie_name]
+         * @property {(posthog_instance: PostHog) => void} loaded
+         * @property {boolean} store_google
+         * @property {string[]} custom_campaign_params
+         * @property {string[]} custom_blocked_useragents
+         * @property {boolean} save_referrer
+         * @property {boolean} verbose
+         * @property {boolean} capture_pageview
+         * @property {boolean | 'if_capture_pageview'} capture_pageleave
+         * @property {boolean} debug
+         * @property {number} cookie_expiration
+         * @property {boolean} upgrade
+         * @property {boolean} disable_session_recording
+         * @property {boolean} disable_persistence
+         * @property {boolean} [disable_cookie]
+         * @property {boolean} disable_surveys
+         * @property {boolean} disable_web_experiments
+         * @property {boolean} [disable_external_dependency_loading] If set, posthog-js will never load external scripts such as those needed for Session Replay or Surveys.
+         * @property {boolean} [enable_recording_console_log]
+         * @property {boolean} secure_cookie
+         * @property {boolean} ip
+         * @property {boolean} opt_out_capturing_by_default Starts the SDK in an opted out state requiring opt_in_capturing() to be called before events will b captured
+         * @property {'localStorage' | 'cookie'} opt_out_capturing_persistence_type
+         * @property {boolean} [opt_out_persistence_by_default] If set to true this will disable persistence if the user is opted out of capturing.
+         * @property {boolean} opt_out_useragent_filter Opt out of user agent filtering such as googlebot or other bots. Defaults to `false`
+         * @property {string | null} opt_out_capturing_cookie_prefix
+         * @property {boolean} opt_in_site_apps
+         * @property {boolean} respect_dnt
+         * @property {string[]} [property_blacklist]
+         * @property {string[]} property_denylist
+         * @property {{ [header_name: string]: string }} request_headers
+         * @property {(error: RequestResponse) => void} [on_request_error]
+         * @property {{ [header_name: string]: string }} [xhr_headers]
+         * @property {(failedRequest: XMLHttpRequest) => void} [on_xhr_error]
+         * @property {string} inapp_protocol
+         * @property {boolean} inapp_link_new_window
+         * @property {boolean} request_batching
+         * @property {((properties: Properties, event_name: string) => Properties) | null} sanitize_properties
+         * @property {number} properties_string_max_length
+         * @property {SessionRecordingOptions} session_recording
+         * @property {number} session_idle_timeout_seconds
+         * @property {boolean} mask_all_element_attributes
+         * @property {boolean} mask_all_text
+         * @property {boolean} advanced_disable_decide
+         * @property {boolean} advanced_disable_feature_flags
+         * @property {boolean} advanced_disable_feature_flags_on_first_load
+         * @property {boolean} advanced_disable_toolbar_metrics
+         * @property {number} feature_flag_request_timeout_ms
+         * @property {(uuid: string) => string} get_device_id
+         * @property {string} name
+         * @property {(eventName: string, eventData: CaptureResult) => void} _onCapture
+         * @property {boolean | PerformanceCaptureConfig} [capture_performance]
+         * @property {boolean} disable_compression
+         * @property {BootstrapConfig} bootstrap
+         * @property {SegmentAnalytics} [segment]
+         * @property {boolean} [__preview_send_client_session_params]
+         * @property {boolean} [enable_heatmaps]
+         * @property {boolean | HeatmapConfig} [capture_heatmaps]
+         * @property {boolean} [disable_scroll_properties]
+         * @property {string | string[]} [scroll_root_selector]
+         * @property {'always' | 'never' | 'identified_only'} [person_profiles] You can control whether events from PostHog-js have person processing enabled with the `person_profiles` config setting. There are three options:
+         * - `person_profiles: 'always'` _(default)_ - we will process persons data for all events
+         * - `person_profiles: 'never'` - we won't process persons for any event. This means that anonymous users will not be merged once they sign up or login, so you lose the ability to create funnels that track users from anonymous to identified. All events (including `$identify`) will be sent with `$process_person_profile: False`.
+         * - `person_profiles: 'identified_only'` - we will only process persons when you call `posthog.identify`, `posthog.alias`, `posthog.setPersonProperties`, `posthog.group`, `posthog.setPersonPropertiesForFlags` or `posthog.setGroupPropertiesForFlags` Anonymous users won't get person profiles.
+         * @property {'always' | 'never' | 'identified_only'} [process_person]
+         * @property {Object} [rate_limiting] Client side rate limiting
+         * @property {number} [rate_limiting.events_per_second] The average number of events per second that should be permitted (defaults to 10)
+         * @property {number} [rate_limiting.events_burst_limit] How many events can be captured in a burst. This defaults to 10 times the events_per_second count
+         * @property {boolean} [__add_tracing_headers] PREVIEW - MAY CHANGE WITHOUT WARNING - DO NOT USE IN PRODUCTION
+         * whether to wrap fetch and add tracing headers to the request
+         */
+        {% endcomment %}
+        /**
+         * @type {Partial<PostHogJsWebConfig>}
+         */
+        const posthogConfig = {
+            api_host: "https://eu.i.posthog.com",
+            person_profiles: "identified_only",
+        }
+
+        posthog.init(apiKey, posthogConfig);
+    })();
+</script>
+{% schema %}
+  {
+    "name": "Posthog Javascript Web",
+    "target": "head",
+    "settings": [
+        {
+            "type": "header",
+            "content" : "Adds [Posthog Javascript Web library](https://posthog.com/docs/libraries/js) to the online store. Note: the library will not be available in Checkout/Post-purchase/Thank you/Order status pages - use Web Pixel to track events in these pages"
+        }
+    ]
+  }
+{% endschema %}
