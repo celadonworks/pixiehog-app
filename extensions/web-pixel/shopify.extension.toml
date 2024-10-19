@@ -11,3 +11,8 @@ type = "object"
 name = "Posthog Project API Key"
 description = "ph_project_api_key"
 type = "single_line_text_field"
+
+[settings.fields.web_pixel_enabled_events]
+name = "Web Pixel Enabled Events"
+description = "web_pixel_enabled_events"
+type = "single_line_text_field"

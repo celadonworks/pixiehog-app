@@ -23,9 +23,11 @@ export default function App() {
     <AppProvider isEmbeddedApp apiKey={apiKey}>
       <NavMenu>
         <Link to="/app" rel="home">
-          Home
+          Posthog API Key
         </Link>
-        <Link to="/app/additional">Additional page</Link>
+        <Link to="/app/WebPixelEvents">
+          Web Pixel Events
+        </Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
