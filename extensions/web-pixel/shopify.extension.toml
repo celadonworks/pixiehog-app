@@ -4,6 +4,12 @@ type = "web_pixel_extension"
 
 runtime_context = "strict"
 
+[customer_privacy]
+analytics = true
+marketing = false
+preferences = false
+sale_of_data = "disabled"
+
 [settings]
 type = "object"
 
