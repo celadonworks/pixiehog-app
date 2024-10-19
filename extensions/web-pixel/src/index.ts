@@ -20,7 +20,7 @@ register(async (extensionApi) => {
 
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
   const hostname = init.context.document.location.hostname;
-  const posthogHost = `https://${hostname}/tools/ph-analytics`;
+  const posthogHost = `https://${init.data.shop.myshopifyDomain}/tools/ph-analytics`;
   const posthog = new PostHog(ph_project_api_key, {
     fetch: fetch,
     host: 'https://eu.i.posthog.com',
