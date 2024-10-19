@@ -98,9 +98,9 @@ validations =  [
   { name = "choices", value = "[\"true\", \"false\"]" }
 ]
 
-[settings.fields.product_removed_from]
-name = "Process product_removed_from"
-description = "Process the product_removed_from event - where a customer removes a product to their cart."
+[settings.fields.product_removed_from_cart]
+name = "Process product_removed_from_cart"
+description = "Process the product_removed_from_cart event - where a customer removes a product to their cart."
 type = "single_line_text_field"
 validations =  [
   { name = "choices", value = "[\"true\", \"false\"]" }
