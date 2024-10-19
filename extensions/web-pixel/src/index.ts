@@ -219,6 +219,26 @@ register(async (extensionApi) => {
   );
 
   analytics.subscribe(
+    'collection_viewed',
+    preprocessEvent(async (event) => {
+      const distinctId = await resolveDistinctId();
+      posthog.capture({
+        distinctId,
+        event: event.name,
+        timestamp: new Date(event.timestamp),
+        uuid: event.id,
+        properties: {
+          ...initProperties,
+          client_id: event.clientId,
+          url: event.context.document.location.href,
+          $current_url: event.context.document.location.href,
+          ...event.data.collection,
+        },
+      });
+    })
+  );
+
+  analytics.subscribe(
     'product_viewed',
     preprocessEvent(async (event) => {
       const distinctId = await resolveDistinctId();
