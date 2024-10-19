@@ -12,8 +12,8 @@ register(async (extensionApi) => {
     init,
     customerPrivacy,
   } = extensionApi;
-
-  const { ph_project_api_key } = extensionApi.settings as WebPixelSettings;
+  const settings = extensionApi.settings as WebPixelSettings;
+  const { ph_project_api_key } = settings;
   if (!ph_project_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
@@ -68,8 +68,9 @@ register(async (extensionApi) => {
       if (customerPrivacyStatus.analyticsProcessingAllowed == false) {
         return;
       }
-      // TODO: add check that event is enabled for collection by merchant
-      if (true || event.name) {
+      // if event is disabled by merchant skip
+      if (settings[event.name] !== 'false') {
+        return;
       }
 
       fn(event);
