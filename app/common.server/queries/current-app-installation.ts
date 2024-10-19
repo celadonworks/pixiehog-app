@@ -1,28 +1,26 @@
-import type { AdminApiContext } from "@shopify/shopify-app-remix/server";
-import type { ShopifyGraphQLResponse } from "../interfaces/shopify-graphql.interface";
-import { json } from "@remix-run/node";
-import type { Metafield } from "../interfaces/shopify-metafield-interface";
-
+import type { AdminGraphqlClient } from '@shopify/shopify-app-remix/server';
+import { json } from '@remix-run/node';
+import type { Metafield } from '../interfaces/shopify-metafield-interface';
 
 export interface CurrentAppInstallationResponseDTO {
-  currentAppInstallation: CurrentAppInstallation
+  currentAppInstallation: CurrentAppInstallation;
 }
 
 export interface CurrentAppInstallation {
-  id:  string
-  app: App
-  ph_key: Metafield
-  web_pixel_events: Metafield
+  id: string;
+  app: App;
+  ph_key: Metafield;
+  web_pixel_events: Metafield;
 }
 
 export interface App {
   id: string;
 }
 
-export const queryCurrentAppInstallation = async (admin:AdminApiContext) => {
-  const response = await admin.graphql(
+export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) => {
+  const response = await graphql(
     `#graphql
-    query {
+    query currentAppInstallation {
       currentAppInstallation {
         id
         app {
@@ -44,7 +42,7 @@ export const queryCurrentAppInstallation = async (admin:AdminApiContext) => {
       }
     }
     `
-  )
-  const responseJson = await response.json() as ShopifyGraphQLResponse<CurrentAppInstallationResponseDTO>
-  return json(responseJson.data.currentAppInstallation)
-}
+  );
+  const responseJson = (await response.json());
+  return json(responseJson.data?.currentAppInstallation);
+};

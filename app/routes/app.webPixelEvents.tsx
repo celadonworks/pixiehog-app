@@ -18,13 +18,13 @@ import {SearchIcon} from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation } from "app/common.server/queries/current-app-installation";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const admin = await authenticate.admin(request);
-  queryCurrentAppInstallation(admin)
+  const {admin} = await authenticate.admin(request);
+  queryCurrentAppInstallation(admin.graphql)
   return null;
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  await authenticate.admin(request);
 };
 
 export default function WebPixelEvents() {

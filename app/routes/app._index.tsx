@@ -18,21 +18,21 @@ import {
 import { useForm } from "@shopify/react-form";
 import { queryCurrentAppInstallation } from "app/common.server/queries/current-app-installation";
 import { Constant } from "../../common/constant/index"
-import { metafieldsSet } from "app/common.server/mutations/metafields-set";
+import { metafieldsSet } from "../common.server/mutations/metafield-set";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
-  const {ph_key} = await (await queryCurrentAppInstallation(admin)).json()
-  if(!ph_key){
+  const data = await (await queryCurrentAppInstallation(admin.graphql)).json()
+  if(!data?.ph_key){
     return null
   }
 
-  return json(ph_key.value);
+  return json(data.ph_key.value);
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
-  const currentAppInstallation = await (await queryCurrentAppInstallation(admin)).json()
-  const appId = currentAppInstallation.id
+  const currentAppInstallation = await (await queryCurrentAppInstallation(admin.graphql)).json()
+  const appId = currentAppInstallation!.id
   const formData:FormData = await request.formData();
   const postHogApiKey = formData.get("posthog_api_key") as string
   if(!postHogApiKey){
@@ -47,7 +47,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       value: postHogApiKey
     }
   ]
-  const metafieldResp = await (await metafieldsSet(admin,metafields)).json()
+  await (await metafieldsSet(admin.graphql,metafields)).json()
 
   return json({ ok:true ,message: 'PostHog API key saved successfully.' }, { status: 200 });
 
