@@ -7,7 +7,10 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
 import prisma from "./db.server";
-import { webPixelCreate } from "./common.server/mutations/web-pixel-create";
+import { metafieldsSet } from "./common.server/mutations/metafields-set";
+import { Constant } from "../common/constant";
+import { queryCurrentAppInstallation } from "./common.server/queries/current-app-installation";
+import type { WebPixelEventsSettings } from "../common/dto/web-pixel-events-settings.dto";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -22,27 +25,36 @@ const shopify = shopifyApp({
   isEmbeddedApp: true,
   hooks: {
     afterAuth: async ({ session, admin }) => {
-            console.log('after auth') ;
-            await webPixelCreate(admin.graphql, {
-              ph_project_api_key: 'phc_pO8qo4XkzmJkWrr08pgCtIX5me8u48uRxenJpChBnpU',
-              payment_info_submitted: 'true',
-              cart_viewed: 'true',
-              checkout_address_info_submitted: 'true',
-              checkout_completed: 'true',
-              checkout_contact_info_submitted: 'true',
-              checkout_shipping_info_submitted: 'true',
-              checkout_started: 'true',
-              clicked: 'true',
-              collection_viewed: 'true',
-              input_blurred: 'true',
-              input_changed: 'true',
-              input_focused: 'true',
-              page_viewed: 'true',
-              product_added_to_cart: 'true',
-              product_removed_from: 'true',
-              product_viewed: 'true',
-              search_submitted: 'true'
-            })
+            const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
+            // initiate Web Pixel state
+            await metafieldsSet(admin.graphql, [
+              {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify({
+                  cart_viewed: 'false',
+                  checkout_address_info_submitted: 'false',
+                  checkout_completed: 'true',
+                  checkout_contact_info_submitted: 'true',
+                  checkout_shipping_info_submitted: 'false',
+                  checkout_started: 'true',
+                  clicked: 'true',
+                  collection_viewed: 'false',
+                  form_submitted: 'true',
+                  input_blurred: 'false',
+                  input_changed: 'false',
+                  input_focused: 'false',
+                  page_viewed: 'true',
+                  payment_info_submitted: 'true',
+                  product_added_to_cart: 'true',
+                  product_removed_from_cart: 'true',
+                  product_viewed: 'false',
+                  search_submitted: 'false'
+                } as WebPixelEventsSettings)
+              }
+            ])
       },
     },
   future: {

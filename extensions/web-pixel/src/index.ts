@@ -1,8 +1,8 @@
 import type { CustomerPrivacyPayload, StandardEvents } from '@shopify/web-pixels-extension';
 import { register } from '@shopify/web-pixels-extension';
-import type { WebPixelSettings } from './interface/interface';
 import { PostHog } from 'posthog-node';
 import { v7 as uuidv7 } from 'uuid';
+import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 
 register(async (extensionApi) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -13,8 +13,8 @@ register(async (extensionApi) => {
     customerPrivacy,
   } = extensionApi;
   const settings = extensionApi.settings as WebPixelSettings;
-  const { ph_project_api_key } = settings;
-  if (!ph_project_api_key) {
+  const { posthog_api_key } = settings;
+  if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
 
@@ -22,7 +22,7 @@ register(async (extensionApi) => {
   const posthogHost = `https://${init.data.shop.myshopifyDomain}/tools/ph-analytics`;
 
   async function resolveDistinctId() {
-    const POSTHOG_KEY = `ph_${ph_project_api_key}_posthog`;
+    const POSTHOG_KEY = `ph_${posthog_api_key}_posthog`;
     const webPostHogPersistedString = await localStorage.getItem(POSTHOG_KEY);
     const webPostHogPersisted: {
       distinct_id: string;
@@ -37,7 +37,7 @@ register(async (extensionApi) => {
     return distinct_id;
   }
 
-  const posthog = new PostHog(ph_project_api_key, {
+  const posthog = new PostHog(posthog_api_key, {
     fetch: fetch,
     host: true ? 'https://eu.i.posthog.com' : posthogHost,
     persistence: 'memory',
@@ -69,7 +69,7 @@ register(async (extensionApi) => {
         return;
       }
       // if event is disabled by merchant skip
-      if (settings[event.name] !== 'false') {
+      if (settings[event.name as keyof WebPixelSettings] !== 'false') {
         return;
       }
 

@@ -1,6 +1,6 @@
 import type { AdminGraphqlClient } from '@shopify/shopify-app-remix/server';
-import { json } from '@remix-run/node';
 import type { Metafield } from '../interfaces/shopify-metafield-interface';
+import { Constant } from '../../../common/constant';
 
 export interface CurrentAppInstallationResponseDTO {
   currentAppInstallation: CurrentAppInstallation;
@@ -20,19 +20,18 @@ export interface App {
 export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) => {
   const response = await graphql(
     `#graphql
-    query currentAppInstallation {
+    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!) {
       currentAppInstallation {
         id
         app {
           id
         }
-        ph_key: metafield(namespace: "ph_analytics", key: "apiKey") {
+        posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {
           key
-          jsonValue
           value
           type
         }
-        web_pixel_events: metafield(namespace: "ph_analytics", key: "webPixelEvents") {
+        web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {
           key
           jsonValue
           value
@@ -41,8 +40,15 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         
       }
     }
-    `
+    `,
+    {
+      variables: {
+        namespace: Constant.METAFIELD_NAMESPACE,
+        posthogApiKeyKey: Constant.METAFIELD_KEY_POSTHOG_API_KEY,
+        webPixelEventsSettingsKey: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
+      }
+    }
   );
   const responseJson = (await response.json());
-  return json(responseJson.data?.currentAppInstallation);
+  return responseJson.data!.currentAppInstallation;
 };

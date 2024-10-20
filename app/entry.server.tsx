@@ -3,10 +3,13 @@ import { renderToPipeableStream } from "react-dom/server";
 import { RemixServer } from "@remix-run/react";
 import {
   createReadableStreamFromReadable,
+  type LoaderFunctionArgs,
+  type ActionFunctionArgs,
   type EntryContext,
 } from "@remix-run/node";
 import { isbot } from "isbot";
 import { addDocumentResponseHeaders } from "./shopify.server";
+import { serializeError } from "serialize-error";
 
 const ABORT_DELAY = 5000;
 
@@ -55,4 +58,19 @@ export default async function handleRequest(
 
     setTimeout(abort, ABORT_DELAY);
   });
+}
+
+export function handleError(
+  error: unknown,
+  {
+    request,
+    params,
+    context,
+  }: LoaderFunctionArgs | ActionFunctionArgs
+) {
+  console.dir({
+    seralizedError: serializeError(error, {maxDepth: 7})
+  }, {
+    depth: 8,
+  })
 }

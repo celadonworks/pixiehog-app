@@ -13,9 +13,9 @@ sale_of_data = "disabled"
 [settings]
 type = "object"
 
-[settings.fields.ph_project_api_key]
+[settings.fields.posthog_api_key]
 name = "Posthog Project API Key"
-description = "ph_project_api_key"
+description = "posthog_api_key"
 type = "single_line_text_field"
 
 [settings.fields.cart_viewed]

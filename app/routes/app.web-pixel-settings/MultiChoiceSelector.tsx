@@ -1,5 +1,6 @@
-import { BlockStack, Box, Card, Checkbox, Icon, InlineGrid, Scrollable, Text } from '@shopify/polaris';
+import { BlockStack, Box, Card, Checkbox, Icon, InlineCode, InlineGrid, Scrollable, Text } from '@shopify/polaris';
 import { SearchIcon } from '@shopify/polaris-icons';
+import type { WebPixelSettingChoice } from './interface/setting-row.interface';
 interface WebPixelEventData {
   title: string;
   info: string;
@@ -26,40 +27,42 @@ export interface WebPixelEvents {
   form_submitted: WebPixelEventData;
 }
 export interface MultiChoiceSelectorProps {
-  events: WebPixelEvents;
-  onChange: (key: keyof WebPixelEvents) => void;
+  webPixelSettings: WebPixelSettingChoice[];
+  onChange: (key: string) => void;
 }
 
-export default function MultiChoiceSelector({ events, onChange }: MultiChoiceSelectorProps) {
+export default function MultiChoiceSelector({ webPixelSettings, onChange }: MultiChoiceSelectorProps) {
   return (
     <Card>
-      {Object.entries(events).length ? (
+      {Object.entries(webPixelSettings).length ? (
         <Scrollable shadow style={{ height: 'max-content', maxHeight: '500px' }}>
           <BlockStack gap="800">
-            {(Object.entries(events) as [keyof WebPixelEvents, WebPixelEventData][]).map(
-              ([key, value], index: number) => {
+            {webPixelSettings
+              .filter((entry) => !entry.filteredOut)
+              .map((entry, index: number) => {
                 return (
-                  <InlineGrid gap="1600" columns={2} key={index} alignItems="center">
+                  <InlineGrid gap="1600" columns={2} key={entry.key} alignItems="center">
                     <BlockStack gap="100">
                       <Text variant="headingSm" as="h2">
-                        {value.title}
+                      {entry.key}
                       </Text>
                       <Text variant="bodyMd" as="p">
-                        {value.info}
+                        The <InlineCode>{entry.key}</InlineCode> {entry.description}
                       </Text>
                     </BlockStack>
                     <BlockStack gap="100">
                       <Checkbox
-                        label={<code>{key}</code>}
-                        checked={value.isSelected}
-                        id={key}
-                        onChange={() => onChange(key)}
+                        label={<code>{entry.key}</code>}
+                        checked={entry.selected}
+                        id={entry.key}
+                        key={entry.key}
+                        name={entry.key}
+                        onChange={() => onChange(entry.key)}
                       />
                     </BlockStack>
                   </InlineGrid>
                 );
-              }
-            )}
+              })}
           </BlockStack>
         </Scrollable>
       ) : (

@@ -3,7 +3,7 @@
 client_id = "dccee050afcd89238a3d924aa7608d5c"
 name = "Posthog Analytics"
 handle = "posthog-analytics"
-application_url = "https://gilbert-casting-enhancement-manchester.trycloudflare.com"
+application_url = "https://richmond-brad-posing-roger.trycloudflare.com"
 embedded = true
 
 [build]
@@ -17,16 +17,16 @@ scopes = "read_customer_events,write_pixels"
 
 [auth]
 redirect_urls = [
-  "https://gilbert-casting-enhancement-manchester.trycloudflare.com/auth/callback",
-  "https://gilbert-casting-enhancement-manchester.trycloudflare.com/auth/shopify/callback",
-  "https://gilbert-casting-enhancement-manchester.trycloudflare.com/api/auth/callback"
+  "https://richmond-brad-posing-roger.trycloudflare.com/auth/callback",
+  "https://richmond-brad-posing-roger.trycloudflare.com/auth/shopify/callback",
+  "https://richmond-brad-posing-roger.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-07"
 
 [app_proxy]
-url = "https://gilbert-casting-enhancement-manchester.trycloudflare.com"
+url = "https://richmond-brad-posing-roger.trycloudflare.com"
 subpath = "ph-analytics"
 prefix = "tools"
 
