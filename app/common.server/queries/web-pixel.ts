@@ -1,21 +1,7 @@
 import type { AdminGraphqlClient } from '@shopify/shopify-app-remix/server';
-import type { Metafield } from '../interfaces/shopify-metafield-interface';
 import { GraphqlQueryError } from '@shopify/shopify-api';
 import type { GraphQLClientResponse } from '@shopify/shopify-api';
 import type { Maybe, WebPixel } from '../../types/admin.types';
-export interface CurrentAppInstallationResponseDTO {
-  currentAppInstallation: CurrentAppInstallation;
-}
-export interface CurrentAppInstallation {
-  id: string;
-  app: App;
-  ph_key: Metafield;
-  web_pixel_events: Metafield;
-}
-
-export interface App {
-  id: string;
-}
 
 export const queryWebPixel = async (graphql: AdminGraphqlClient) => {
   try {
