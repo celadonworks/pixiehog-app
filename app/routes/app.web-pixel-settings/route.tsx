@@ -33,7 +33,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
   const payload = Object.fromEntries(formData.entries());
   const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
@@ -45,6 +44,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       .join('|\n');
     return json({ ok: false, message }, { status: 400 });
   }
+  
+  const { admin } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
   const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
