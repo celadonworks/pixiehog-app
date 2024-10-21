@@ -1,6 +1,6 @@
 import { z } from 'zod';
 export const JSWebConfigSchema = z.object({
-  api_host: z.string().describe('URL of your PostHog instance.').trim().url().default('https://us.i.posthog.com'),
+  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullable().default(null),
 
   ui_host: z
     .string()
@@ -11,51 +11,6 @@ export const JSWebConfigSchema = z.object({
     .url()
     .nullable()
     .default(null),
-
-  'autocapture.url_allowlist': z
-    .array(z.string().trim())
-    .describe(
-      `List of URLs to enable autocapture on, can be string or regex matches e.g. ['https://example.com', 'test.com/.*']. An empty list means no URLs are allowed for capture, unset means all URLS are`
-    )
-    .nullable()
-    .default(null),
-
-  'autocapture.dom_event_allowlist': z
-    .array(z.string().trim())
-    .describe(
-      `An array of DOM events, like 'click', 'change', 'submit', to enable autocapture on. An empty array means no events are enable for capture, unset means all are.`
-    )
-    .nullable()
-    .default(null),
-
-  'autocapture.element_allowlist': z
-    .array(z.string().trim())
-    .describe(
-      `An array of DOM elements, like 'a', 'button', 'form', 'input', 'select', 'textarea', or 'label', to allow autocapture on. An empty array means no elements are enabled for capture, unset means all elements are enabled.`
-    )
-    .nullable()
-    .default(null),
-
-  'autocapture.css_selector_allowlist': z
-    .array(z.string().trim())
-    .describe(
-      'An array of CSS selectors to enable autocapture on. An empty array means no CSS selectors are allowed for capture, unset means all CSS selectors are.'
-    )
-    .nullable()
-    .default(null),
-
-  'autocapture.element_attribute_ignorelist': z
-    .array(z.string().trim())
-    .describe(
-      'An array of element attributes that autocapture will not capture. Both an empty array and unset mean any of the attributes from the element are captured.'
-    )
-    .nullable()
-    .default(null),
-
-  'autocapture.capture_copied_text': z
-    .boolean()
-    .describe('When set to true, autocapture will capture the text of any element that is cut or copied.')
-    .default(false),
 
   // set app's default to false because web pixel is recommended
   capture_pageview: z
@@ -178,11 +133,60 @@ export const JSWebConfigSchema = z.object({
     .default([]),
 
   // the following will not be implemented
+  /**
+   * 
   sanitize_properties: z.unknown().transform(() => null),
   loaded: z.unknown().transform(() => null),
   bootstrap: z.unknown().transform(() => null),
   session_recording: z.unknown().transform(() => null),
   xhr_headers: z.unknown().transform(() => null),
+  autocapture: z.unknown().transform(() => null),
+  
+  'autocapture.url_allowlist': z
+    .array(z.string().trim())
+    .describe(
+      `List of URLs to enable autocapture on, can be string or regex matches e.g. ['https://example.com', 'test.com/.*']. An empty list means no URLs are allowed for capture, unset means all URLS are`
+    )
+    .nullable()
+    .default(null),
+
+  'autocapture.dom_event_allowlist': z
+    .array(z.string().trim())
+    .describe(
+      `An array of DOM events, like 'click', 'change', 'submit', to enable autocapture on. An empty array means no events are enable for capture, unset means all are.`
+    )
+    .nullable()
+    .default(null),
+
+  'autocapture.element_allowlist': z
+    .array(z.string().trim())
+    .describe(
+      `An array of DOM elements, like 'a', 'button', 'form', 'input', 'select', 'textarea', or 'label', to allow autocapture on. An empty array means no elements are enabled for capture, unset means all elements are enabled.`
+    )
+    .nullable()
+    .default(null),
+
+  'autocapture.css_selector_allowlist': z
+    .array(z.string().trim())
+    .describe(
+      'An array of CSS selectors to enable autocapture on. An empty array means no CSS selectors are allowed for capture, unset means all CSS selectors are.'
+    )
+    .nullable()
+    .default(null),
+
+  'autocapture.element_attribute_ignorelist': z
+    .array(z.string().trim())
+    .describe(
+      'An array of element attributes that autocapture will not capture. Both an empty array and unset mean any of the attributes from the element are captured.'
+    )
+    .nullable()
+    .default(null),
+
+  'autocapture.capture_copied_text': z
+    .boolean()
+    .describe('When set to true, autocapture will capture the text of any element that is cut or copied.')
+    .default(false),
+  */
 });
 
 export type JSWebSConfig = z.infer<typeof JSWebConfigSchema>;
