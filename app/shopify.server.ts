@@ -29,6 +29,13 @@ const shopify = shopifyApp({
             // initiate Web Pixel state
             await metafieldsSet(admin.graphql, [
               {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'single_line_text_field',
+                value: 'true',
+              },
+              {
                 key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
                 namespace: Constant.METAFIELD_NAMESPACE,
                 ownerId: currentAppInstallation.id,

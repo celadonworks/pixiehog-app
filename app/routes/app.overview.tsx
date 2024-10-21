@@ -99,7 +99,7 @@ export default function Index() {
   return (
     <fetcher.Form onSubmit={submit} method="post">
       <Page
-        title="Posthog Analytics"
+        title="Overview"
         primaryAction={
           (
             <Button

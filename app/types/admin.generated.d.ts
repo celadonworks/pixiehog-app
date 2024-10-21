@@ -46,12 +46,13 @@ export type CurrentAppInstallationQueryVariables = AdminTypes.Exact<{
   namespace: AdminTypes.Scalars['String']['input'];
   posthogApiKeyKey: AdminTypes.Scalars['String']['input'];
   webPixelEventsSettingsKey: AdminTypes.Scalars['String']['input'];
+  webPixelFeatureToggle: AdminTypes.Scalars['String']['input'];
 }>;
 
 
 export type CurrentAppInstallationQuery = { currentAppInstallation: (
     Pick<AdminTypes.AppInstallation, 'id'>
-    & { app: Pick<AdminTypes.App, 'id'>, posthog_api_key?: AdminTypes.Maybe<Pick<AdminTypes.Metafield, 'key' | 'value' | 'type'>>, web_pixel_settings?: AdminTypes.Maybe<Pick<AdminTypes.Metafield, 'key' | 'jsonValue' | 'value' | 'type'>> }
+    & { app: Pick<AdminTypes.App, 'id'>, posthog_api_key?: AdminTypes.Maybe<Pick<AdminTypes.Metafield, 'key' | 'value' | 'type'>>, web_pixel_settings?: AdminTypes.Maybe<Pick<AdminTypes.Metafield, 'key' | 'jsonValue' | 'value' | 'type'>>, web_pixel_feature_toggle?: AdminTypes.Maybe<Pick<AdminTypes.Metafield, 'key' | 'jsonValue' | 'value' | 'type'>> }
   ) };
 
 export type WebPixelQueryVariables = AdminTypes.Exact<{ [key: string]: never; }>;
@@ -60,7 +61,7 @@ export type WebPixelQueryVariables = AdminTypes.Exact<{ [key: string]: never; }>
 export type WebPixelQuery = { webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> };
 
 interface GeneratedQueryTypes {
-  "#graphql\n    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!) {\n      currentAppInstallation {\n        id\n        app {\n          id\n        }\n        posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {\n          key\n          value\n          type\n        }\n        web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {\n          key\n          jsonValue\n          value\n          type\n        }\n        \n      }\n    }\n    ": {return: CurrentAppInstallationQuery, variables: CurrentAppInstallationQueryVariables},
+  "#graphql\n    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!, $webPixelFeatureToggle: String!) {\n      currentAppInstallation {\n        id\n        app {\n          id\n        }\n        posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {\n          key\n          value\n          type\n        }\n        web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {\n          key\n          jsonValue\n          value\n          type\n        }\n        web_pixel_feature_toggle: metafield(namespace: $namespace, key: $webPixelFeatureToggle) {\n          key\n          jsonValue\n          value\n          type\n        }\n      }\n    }\n    ": {return: CurrentAppInstallationQuery, variables: CurrentAppInstallationQueryVariables},
   "\n      #graphql\n      query webPixel {\n        webPixel {\n          id\n          settings\n        }\n      }\n    ": {return: WebPixelQuery, variables: WebPixelQueryVariables},
 }
 

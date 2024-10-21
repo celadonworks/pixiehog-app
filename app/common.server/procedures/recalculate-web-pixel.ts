@@ -15,10 +15,7 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   const metafieldWebPixelSettings = currentAppInstallation.web_pixel_settings?.jsonValue;
   const posthogApiKey = currentAppInstallation.posthog_api_key?.value;
 
-  console.dir({
-    currentAppInstallation,
-    shopifyWebPixel,
-  });
+  const webPixelFeatureToggle = currentAppInstallation.web_pixel_feature_toggle?.value == 'true'
   const dtoResult = WebPixelSettingsSchema.safeParse({
     ...(posthogApiKey && {
       posthog_api_key: posthogApiKey,
@@ -27,6 +24,17 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
       ...metafieldWebPixelSettings,
     }),
   } as WebPixelSettings);
+
+
+  if (!webPixelFeatureToggle) {
+    if (!shopifyWebPixel?.id) {
+      // no pixel already nothing to do
+      return null;
+    }
+    await webPixelDelete(graphq, shopifyWebPixel.id);
+    return { status: 'disconnected' };
+  }
+
   if (!dtoResult.success) {
     // we do not have settings
     // this probably means posthog_api_key is not set or incorrect

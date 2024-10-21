@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, Card, BlockStack, Tabs, Text, Divider, TextField, Icon } from '@shopify/polaris';
+import {
+  Page,
+  Layout,
+  Card,
+  BlockStack,
+  Tabs,
+  Divider,
+  TextField,
+  Icon,
+  Box,
+} from '@shopify/polaris';
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -12,6 +22,9 @@ import { metafieldsSet } from '../../common.server/mutations/metafields-set';
 import { Constant } from '../../../common/constant';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 import { recalculateWebPixel } from '../../common.server/procedures/recalculate-web-pixel';
+import { defaultWebPixelSettings } from './default-web-pixel-settings';
+import WebPixelSettingsHeader from './Header';
+import { WebPixelFeatureToggleSchema } from '../../../common/dto/web-pixel-feature-toggle.dto';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -23,7 +36,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const formData = await request.formData();
   const payload = Object.fromEntries(formData.entries());
-  const dtoResult = WebPixelEventsSettingsSchema.safeParse(payload);
+  const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
       .map(([key, errors]) => {
@@ -34,12 +47,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
-  const responseMetafieldsSet = await metafieldsSet(admin.graphql, [
+  const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
+  const responseMetafieldsSet = await metafieldsSet(admin.graphql, 
+    [
+    {
+      key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
+      namespace: Constant.METAFIELD_NAMESPACE,
+      ownerId: currentAppInstallation.id,
+      type: 'single_line_text_field',
+      value: web_pixel_feature_toggle,
+    },
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: currentAppInstallation.id,
-      value: JSON.stringify(dtoResult.data),
+      value: JSON.stringify(webPixelEventSettings),
       type: 'json',
     },
   ]);
@@ -52,7 +74,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const responseRecalculate = await recalculateWebPixel(admin.graphql);
   if (!responseRecalculate) {
-    return json({ ok: true, message: 'Web pixel setting saved' }, { status: 200 });
+    return json({ ok: true, message: 'Web pixel settings saved' }, { status: 200 });
   }
   return json({ ok: true, message: `Web pixel ${responseRecalculate.status}` }, { status: 200 });
 };
@@ -64,129 +86,8 @@ export default function WebPixelEvents() {
     | undefined
     | null
     | WebPixelSettings;
-  const defaultSettings: WebPixelSettingChoice[] = [
-    {
-      key: 'cart_viewed',
-      description: "event logs an instance where a customer visited the cart page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'checkout_address_info_submitted',
-      description:
-        "event logs an instance of a customer submitting their mailing address. This event is only available in checkouts where Checkout Extensibility for customizations is enabled",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'checkout_completed',
-      description:
-        "event logs when a visitor completes a purchase. It's triggered once for each checkout, typically on the Thank you page. However, for upsells and post purchases, the 'checkout_completed' event is triggered on the first upsell offer page instead. The event isn't triggered again on the Thank you page. If the page where the event is supposed to be triggered fails to load, then the 'checkout_completed' event isn't triggered at all.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'checkout_contact_info_submitted',
-      description:
-        "event logs an instance where a customer submits a checkout form. This event is only available in checkouts where Checkout Extensibility for customizations is enabled",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'checkout_shipping_info_submitted',
-      description:
-        "event logs an instance where the customer chooses a shipping rate. This event is only available in checkouts where Checkout Extensibility for customizations is enabled",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'checkout_started',
-      description:
-        "event logs an instance of a customer starting the checkout process. This event is available on the checkout page. For Checkout Extensibility, this event is triggered every time a customer enters checkout. For non-checkout extensible shops, this event is only triggered the first time a customer enters checkout.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'collection_viewed',
-      description:
-        "event logs an instance where a customer visited a product collection index page. This event is available on the online store page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'page_viewed',
-      description:
-        "event logs an instance where a customer visited a page. This event is available on the online store, checkout, and Order status pages.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'payment_info_submitted',
-      description:
-        "event logs an instance of a customer submitting their payment information. This event is available on the checkout page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'product_added_to_cart',
-      description:
-        "event logs an instance where a customer adds a product to their cart. This event is available on the online store page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'product_removed_from_cart',
-      description:
-        "event logs an instance where a customer removes a product from their cart. This event is available on the online store page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'product_viewed',
-      description:
-        "event logs an instance where a customer visited a product details page. This event is available on the product page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'search_submitted',
-      description:
-        "event logs an instance where a customer performed a search on the storefront. The products returned from the search query are in this event object (the first product variant for each product is listed in the array). This event is available on the online store page.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'clicked',
-      description: "event logs an instance where a customer clicks on a page element.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'form_submitted',
-      description: "event logs an instance where a form on a page is submitted.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'input_blurred',
-      description: "event logs an instance where an input on a page loses focus.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'input_changed',
-      description: "event logs an instance where an input value changes.",
-      selected: false,
-      filteredOut: false,
-    },
-    {
-      key: 'input_focused',
-      description: "event logs an instance where an input on a page gains focus.",
-      selected: false,
-      filteredOut: false,
-    },
-  ];
-  const webPixelSettingsState = defaultSettings.map<WebPixelSettingChoice>((entry) => {
+
+  const webPixelSettingsState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
     return {
       ...entry,
       selected: webPixelSettingsMetafieldValue?.[entry.key] === 'true',
@@ -247,11 +148,14 @@ export default function WebPixelEvents() {
 
   const submitSettings = () => {
     fetcher.submit(
-      Object.fromEntries(
-        webPixelSettings.map(({ key, selected }) => {
-          return [key, selected];
-        })
-      ),
+      {
+        ...Object.fromEntries(
+          webPixelSettings.map(({ key, selected }) => {
+            return [key, selected];
+          })
+        ),
+        web_pixel_feature_toggle: webPixelFeatureEnabled,
+      },
       {
         method: 'POST',
       }
@@ -264,13 +168,14 @@ export default function WebPixelEvents() {
       return;
     }
     console.log('data.ok');
-    console.log(data.ok);
+    console.log(data);
 
     if (!data.ok) {
       window.shopify.toast.show(data.message, {
         isError: true,
         duration: 2000,
       });
+      return
     }
 
     window.shopify.toast.show(data.message, {
@@ -280,6 +185,18 @@ export default function WebPixelEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
+  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.value == 'true'
+  const [webPixelFeatureEnabled, setWebPixelFeatureEnabled] = useState(
+    webPixelFeatureToggleInitialState
+  );
+
+  const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
+
+  const dirty = webPixelSettings.some((entry) => {
+    const metafieldValue = webPixelSettingsMetafieldValue?.[entry.key] || 'false';
+    return String(entry.selected) != metafieldValue;
+  }) || webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
+  console.log({ dirty });
   return (
     <Page
       title="Web Pixel Settings"
@@ -287,19 +204,23 @@ export default function WebPixelEvents() {
         onAction: submitSettings,
         content: 'Save',
         loading: fetcher.state != 'idle',
-        disabled: fetcher.state != 'idle',
+        disabled: fetcher.state != 'idle' || !dirty,
       }}
     >
       <Layout>
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <Text variant="headingMd" as="h2">
-                Pick the events ( Web Pixel Events ) you want to track to better understand your customers and improve
-                their shopping experience.
-              </Text>
+              <WebPixelSettingsHeader
+                webPixelFeatureToggleInitialState={webPixelFeatureToggleInitialState}
+                webPixelSettingsMetafieldValue={webPixelSettingsMetafieldValue}
+                posthogApiKey={currentAppInstallation.posthog_api_key?.value}
+                webPixelFeatureEnabled={webPixelFeatureEnabled}
+                handleWebPixelFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
+                webPixelSettings={webPixelSettings}
+              />
               <Divider />
-              <Tabs tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
+              <Tabs disabled={!webPixelFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
                 <BlockStack gap="500">
                   <TextField
                     label=""
@@ -307,11 +228,13 @@ export default function WebPixelEvents() {
                     placeholder="Filter Events"
                     onChange={handleFilterChange}
                     autoComplete="off"
+                    disabled={!webPixelFeatureEnabled}
                     prefix={<Icon source={SearchIcon}></Icon>}
                   />
                   <MultiChoiceSelector
                     webPixelSettings={tabs[selectedTab].id === 'all' ? webPixelSettings : selectedWebPixelSettings}
                     onChange={handleWebPixelSettingChange}
+                    webPixelFeatureEnabled={webPixelFeatureEnabled}
                   ></MultiChoiceSelector>
                 </BlockStack>
               </Tabs>
@@ -319,6 +242,7 @@ export default function WebPixelEvents() {
           </Card>
         </Layout.Section>
       </Layout>
+      <Box paddingBlockEnd={'800'}></Box>
     </Page>
   );
 }

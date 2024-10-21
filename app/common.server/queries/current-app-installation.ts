@@ -20,7 +20,7 @@ export interface App {
 export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) => {
   const response = await graphql(
     `#graphql
-    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!) {
+    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!, $webPixelFeatureToggle: String!) {
       currentAppInstallation {
         id
         app {
@@ -37,7 +37,12 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
           value
           type
         }
-        
+        web_pixel_feature_toggle: metafield(namespace: $namespace, key: $webPixelFeatureToggle) {
+          key
+          jsonValue
+          value
+          type
+        }
       }
     }
     `,
@@ -46,6 +51,7 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         namespace: Constant.METAFIELD_NAMESPACE,
         posthogApiKeyKey: Constant.METAFIELD_KEY_POSTHOG_API_KEY,
         webPixelEventsSettingsKey: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
+        webPixelFeatureToggle: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       }
     }
   );
