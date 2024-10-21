@@ -31,6 +31,9 @@ export default function App() {
         <Link to="/app/web-pixel-settings">
           Web Pixel Events
         </Link>
+        <Link to="/app/js-web-posthog-settings">
+          Javascript Web Posthog
+        </Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

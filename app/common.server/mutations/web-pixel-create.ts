@@ -4,8 +4,7 @@ import { ShopifyUserErrorException } from '../exception/shopify-user-error.excep
 
 export async function webPixelCreate(graphql: AdminGraphqlClient, settings: WebPixelSettings) {
   const resp = await graphql(
-    `
-      #graphql
+    `#graphql
       mutation webPixelCreate($webPixel: WebPixelInput!) {
         webPixelCreate(webPixel: $webPixel) {
           userErrors {

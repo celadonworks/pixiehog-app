@@ -7,8 +7,7 @@ export const metafieldsSet = async (
   metafields: MetafieldsSetMutationVariables['metafields']
 ) => {
   const response = await graphql(
-    `
-      #graphql
+    `#graphql
       mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
         metafieldsSet(metafields: $metafields) {
           metafields {

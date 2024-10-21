@@ -7,8 +7,7 @@ export const metafieldsDelete = async (
   metafields: MetafieldIdentifierInput[]
 ) => {
   const response = await graphql(
-    `
-      #graphql
+    `#graphql
       mutation metafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {
         metafieldsDelete(metafields: $metafields) {
           deletedMetafields {

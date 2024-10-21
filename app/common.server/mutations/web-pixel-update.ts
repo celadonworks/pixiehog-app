@@ -3,8 +3,7 @@ import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dt
 
 export async function webPixelUpdate(graphql: AdminGraphqlClient, id: string, settings: WebPixelSettings) {
   const resp = await graphql(
-    `
-      #graphql
+    `#graphql
       mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {
         webPixelUpdate(id: $id, webPixel: $webPixel) {
           userErrors {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-export const JSWebConfigSchema = z.object({
-  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullable().default(null),
+export const JsWebPosthogConfigSchema = z.object({
+  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(null),
 
   ui_host: z
     .string()
@@ -9,7 +9,7 @@ export const JSWebConfigSchema = z.object({
     )
     .trim()
     .url()
-    .nullable()
+    .nullish()
     .default(null),
 
   // set app's default to false because web pixel is recommended
@@ -189,4 +189,4 @@ export const JSWebConfigSchema = z.object({
   */
 });
 
-export type JSWebSConfig = z.infer<typeof JSWebConfigSchema>;
+export type JsWebPosthogConfig = z.infer<typeof JsWebPosthogConfigSchema>;

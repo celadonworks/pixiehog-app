@@ -26,7 +26,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const postHogApiKey = formData.get('posthog_api_key')?.toString();
   const dtoResult = PosthogApiKeySchema.safeParse({ posthog_api_key: postHogApiKey } as PosthogApiKey);
   if (!dtoResult.success) {
-    const message = dtoResult.error.flatten().fieldErrors.posthog_api_key?.join(' - ');
+    const message = dtoResult.error.flatten().fieldErrors.posthog_api_key?.join(' - ');    
     return json({ ok: false, message: message }, { status: 400 });
   }
 

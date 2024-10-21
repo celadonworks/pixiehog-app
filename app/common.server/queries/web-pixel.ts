@@ -5,15 +5,16 @@ import type { Maybe, WebPixel } from '../../types/admin.types';
 
 export const queryWebPixel = async (graphql: AdminGraphqlClient) => {
   try {
-    const response = await graphql(`
-      #graphql
-      query webPixel {
-        webPixel {
-          id
-          settings
+    const response = await graphql(
+      `#graphql
+        query webPixel {
+          webPixel {
+            id
+            settings
+          }
         }
-      }
-    `);
+      `
+    );
 
     const responseJson = await response.json();
     return responseJson.data?.webPixel;
