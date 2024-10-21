@@ -11,6 +11,7 @@ import { metafieldsSet } from "./common.server/mutations/metafields-set";
 import { Constant } from "../common/constant";
 import { queryCurrentAppInstallation } from "./common.server/queries/current-app-installation";
 import type { WebPixelEventsSettings } from "../common/dto/web-pixel-events-settings.dto";
+import { JSWebConfigSchema } from "../common/dto/js-web-settings.dto";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -27,7 +28,22 @@ const shopify = shopifyApp({
     afterAuth: async ({ session, admin }) => {
             const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
             // initiate Web Pixel state
+            const jsWebConfigDefault = JSWebConfigSchema.parse({})
             await metafieldsSet(admin.graphql, [
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'single_line_text_field',
+                value: 'false',
+              },
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify(jsWebConfigDefault)
+              },
               {
                 key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
                 namespace: Constant.METAFIELD_NAMESPACE,

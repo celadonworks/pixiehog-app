@@ -19,32 +19,44 @@ export interface App {
 
 export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) => {
   const response = await graphql(
-    `#graphql
-    query currentAppInstallation($namespace: String!, $posthogApiKeyKey: String!, $webPixelEventsSettingsKey: String!, $webPixelFeatureToggle: String!) {
-      currentAppInstallation {
-        id
-        app {
+    `
+      #graphql
+      query currentAppInstallation(
+        $namespace: String!
+        $posthogApiKeyKey: String!
+        $webPixelEventsSettingsKey: String!
+        $webPixelFeatureToggle: String!
+        $jsWebPosthogConfig: String!
+      ) {
+        currentAppInstallation {
           id
-        }
-        posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {
-          key
-          value
-          type
-        }
-        web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {
-          key
-          jsonValue
-          value
-          type
-        }
-        web_pixel_feature_toggle: metafield(namespace: $namespace, key: $webPixelFeatureToggle) {
-          key
-          jsonValue
-          value
-          type
+          app {
+            id
+          }
+          posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {
+            key
+            value
+            type
+          }
+          web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {
+            key
+            jsonValue
+            type
+          }
+          web_pixel_feature_toggle: metafield(namespace: $namespace, key: $webPixelFeatureToggle) {
+            key
+            jsonValue
+            value
+            type
+          }
+          js_web_posthog_config: metafield(namespace: $namespace, key: $jsWebPosthogConfig) {
+            key
+            jsonValue
+            value
+            type
+          }
         }
       }
-    }
     `,
     {
       variables: {
@@ -52,9 +64,10 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         posthogApiKeyKey: Constant.METAFIELD_KEY_POSTHOG_API_KEY,
         webPixelEventsSettingsKey: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
         webPixelFeatureToggle: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
-      }
+        jsWebPosthogConfig: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+      },
     }
   );
-  const responseJson = (await response.json());
+  const responseJson = await response.json();
   return responseJson.data!.currentAppInstallation;
 };
