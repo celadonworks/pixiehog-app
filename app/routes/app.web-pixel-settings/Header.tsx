@@ -1,4 +1,4 @@
-import { Badge, Banner, Box, Button, InlineStack, List, Text } from '@shopify/polaris';
+import { Badge, Banner, Box, Button, InlineStack, Link, List, Text } from '@shopify/polaris';
 import type { WebPixelSettingChoice } from './interface/setting-row.interface';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 export interface WebPixelSettingsHeaderProps {
@@ -56,7 +56,7 @@ function RequiredActionsBanner({
     <Box paddingBlockStart={'200'} width="100%">
       <Banner title="The following requirements need to be meet to finalize the Web Pixel setup:" tone="warning">
         <List>
-          {!posthogApiKey && <List.Item>Setup Posthog project API key.</List.Item>}
+          {!posthogApiKey && <List.Item>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</List.Item>}
           {allEventsDisabled && <List.Item>Select at least 1 event from the list below.</List.Item>}
         </List>
       </Banner>
