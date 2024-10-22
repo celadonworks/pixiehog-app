@@ -1,16 +1,14 @@
 import { z } from 'zod';
 export const JsWebPosthogConfigSchema = z.object({
-  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(null),
+  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(''),
 
   ui_host: z
-    .string()
+    .enum(['https://us.posthog.com', 'https://eu.posthog.com'])
     .describe(
       `If using a reverse proxy for 'api_host' then this should be the actual PostHog app URL (e.g. https://us.posthog.com). This ensures that links to PostHog point to the correct host.`
     )
-    .trim()
-    .url()
-    .nullish()
-    .default(null),
+    .nullable()
+    .default("https://us.posthog.com"),
 
   // set app's default to false because web pixel is recommended
   capture_pageview: z
