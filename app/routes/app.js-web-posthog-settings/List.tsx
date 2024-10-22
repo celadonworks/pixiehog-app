@@ -32,9 +32,9 @@ export default function List({ entry, onChange, featureEnabled }: ListProps) {
             key={entry.key}
             name={entry.key}
             placeholder="Add tags"
-            verticalContent={entry.value && entry.value.map((tag) => {
+            verticalContent={entry.value && entry.value.map((tag, index) => {
               return (
-                <Tag key={`option-${tag}`}>
+                <Tag key={`option-${tag}-${index}`}>
                   {tag}
                 </Tag>
               )
