@@ -18,6 +18,15 @@ export default function List({ entry, onChange, featureEnabled }: ListProps) {
     },
     []
   );
+
+  const removeTag = useCallback(
+    (tag: string) => () => {
+      if(entry?.value?.length){   
+        onChange(entry.key, entry.value.filter((entryTag)=> entryTag != tag))
+      }  
+    },
+    [onChange,entry],
+  );
   return (
       <BlockStack gap="500">
       <Combobox
@@ -34,7 +43,10 @@ export default function List({ entry, onChange, featureEnabled }: ListProps) {
             placeholder="Add tags"
             verticalContent={entry.value && entry.value.map((tag, index) => {
               return (
-                <Tag key={`option-${tag}-${index}`}>
+                <Tag 
+                  key={`option-${tag}-${index}`}
+                  onRemove={removeTag(tag)}
+                  >
                   {tag}
                 </Tag>
               )
