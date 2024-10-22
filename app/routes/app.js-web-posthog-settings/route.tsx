@@ -40,10 +40,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
       .map(([key, errors]) => {
-        return `${key}: ${errors.join(' & ')}`;
+        return `${key}`;
       })
-      .join('|\n');
-    return json({ ok: false, message }, { status: 400 });
+      .join(', ');
+    return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
   }
   
   const { admin } = await authenticate.admin(request);
@@ -67,8 +67,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       type: 'json',
     },
   ]);
-
-
+  /*
+  TODO: handle metafieldsSet error
+  */
   return json({ ok: true, message: 'PostHog Javascript settings saved' }, { status: 200 });
 };
 
@@ -154,8 +155,6 @@ export default function JsWebEvents() {
     if (!data) {
       return;
     }
-
-
     if (!data.ok) {
       window.shopify.toast.show(data.message, {
         isError: true,
@@ -197,7 +196,7 @@ export default function JsWebEvents() {
   };
 
   const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
-  const formattedJsWebPosthogSettings = JsWebPosthogConfigSchema.parse(Object.fromEntries(jsWebPosthogSettings.map(({key, value}) => [key, value] )))
+  const formattedJsWebPosthogSettings = Object.fromEntries(jsWebPosthogSettings.map(({key, value}) => [key, value] ))
   const diff = detailedDiff(jsWebPosthogSettingsMetafieldValue || {}, formattedJsWebPosthogSettings)
   const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureToggleInitialState;
   return (
