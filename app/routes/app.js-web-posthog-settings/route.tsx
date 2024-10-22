@@ -67,12 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       type: 'json',
     },
   ]);
-  console.dir(
-    { responseMetafieldsSet },
-    {
-      depth: 4,
-    }
-  );
+
 
   return json({ ok: true, message: 'PostHog Javascript settings saved' }, { status: 200 });
 };
@@ -159,8 +154,7 @@ export default function JsWebEvents() {
     if (!data) {
       return;
     }
-    console.log('data.ok');
-    console.log(data);
+
 
     if (!data.ok) {
       window.shopify.toast.show(data.message, {
@@ -177,16 +171,12 @@ export default function JsWebEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
-  console.log("currentAppInstallation.js_web_posthog_feature_toggle");
-  console.log(currentAppInstallation.js_web_posthog_feature_toggle);
   
   const jsWebPosthogFeatureToggleInitialState = currentAppInstallation.js_web_posthog_feature_toggle?.jsonValue == true
   const [jsWebPosthogFeatureEnabled, setjsWebPosthogFeatureEnabled] = useState(
     jsWebPosthogFeatureToggleInitialState
   );
 
-  console.log("jsWebPosthogFeatureEnabled");
-  console.log(jsWebPosthogFeatureEnabled);
   
 
   const submitSettings = () => {
