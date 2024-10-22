@@ -34,13 +34,12 @@ export default function List({ entry, onChange, featureEnabled }: ListProps) {
         activator={
           <Combobox.TextField
             autoComplete="off"
-            label= "Add"
-            labelHidden
+            label= {entry.key}
             value= {value}
             id={entry.key}
             key={entry.key}
             name={entry.key}
-            placeholder="Add tags"
+            placeholder={"Add " + entry.key}
             verticalContent={entry.value && entry.value.map((tag, index) => {
               return (
                 <Tag 
