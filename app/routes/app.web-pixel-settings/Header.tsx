@@ -16,7 +16,6 @@ function StatusBadge({
   webPixelSettings,
   dirty
 }: Pick<WebPixelSettingsHeaderProps, 'posthogApiKey' | 'webPixelFeatureEnabled' | 'webPixelSettings'> & { dirty: boolean}) {
-  console.log({ xx_: webPixelSettings });
   if (!webPixelFeatureEnabled) {
     return (
       <Badge size="large" tone={dirty ? 'attention' : 'enabled'}>

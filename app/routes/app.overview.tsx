@@ -80,8 +80,6 @@ export default function Index() {
     if (!data) {
       return;
     }
-    console.log('data.ok');
-    console.log(data.ok);
 
     if (data.ok) {
       window.shopify.toast.show(data.message, {

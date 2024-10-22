@@ -16,7 +16,6 @@ function StatusBadge({
   jsWebPosthogSettings,
   dirty
 }: Pick<JsWebPosthogConfigHeaderProps, 'posthogApiKey' | 'jsWebPosthogFeatureEnabled' | 'jsWebPosthogSettings'> & { dirty: boolean}) {
-  console.log({ xx_: jsWebPosthogSettings });
   if (!jsWebPosthogFeatureEnabled) {
     return (
       <Badge size="large" tone={dirty ? 'attention' : 'enabled'}>

@@ -80,7 +80,7 @@ export default function JsWebEvents() {
     | undefined
     | null
     | JsWebPosthogConfig;
-
+    
   const jsWebPosthogSettingsState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
     if(jsWebPosthogSettingsMetafieldValue?.[entry.key]){
       return {

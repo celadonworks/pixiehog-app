@@ -47,6 +47,8 @@ register(async (extensionApi) => {
       distinctId: await resolveDistinctId(),
       isIdentifiedId: false,
     },
+    
+
   });
 
   /**
