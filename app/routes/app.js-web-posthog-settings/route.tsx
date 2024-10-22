@@ -24,6 +24,7 @@ import { defaultJsWebPosthogSettings } from './default-js-web-settings';
 import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggle.dto';
 import JsWebPosthogHeader from './Header';
+import { detailedDiff } from 'deep-object-diff';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
@@ -206,27 +207,9 @@ export default function JsWebEvents() {
   };
 
   const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
-  const dirty = jsWebPosthogSettings.some((entry) => {
-    const metafieldValue = (() => {
-      if(entry.type === 'Checkbox'){
-        return jsWebPosthogSettingsMetafieldValue?.[entry.key] || false;
-      }
-      if(entry.type === 'Number'){
-        return jsWebPosthogSettingsMetafieldValue?.[entry.key] || 0;
-      }
-      if(entry.type === 'List'){
-        return jsWebPosthogSettingsMetafieldValue?.[entry.key] || [""];
-      }
-      if(entry.type === 'Text' || entry.type === 'Select' ){
-        return jsWebPosthogSettingsMetafieldValue?.[entry.key] || "";
-      }
-      return null
-    })()
-    
-    if(!metafieldValue) return false
-    return entry.value != metafieldValue;
-  }) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureToggleInitialState;
-  console.log({ dirty });
+  const formattedJsWebPosthogSettings = JsWebPosthogConfigSchema.parse(Object.fromEntries(jsWebPosthogSettings.map(({key, value}) => [key, value] )))
+  const diff = detailedDiff(jsWebPosthogSettingsMetafieldValue || {}, formattedJsWebPosthogSettings)
+  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureToggleInitialState;
   return (
     <Page
       title="Web Pixel Settings"
