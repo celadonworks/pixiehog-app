@@ -89,7 +89,7 @@ export default function JsWebEvents() {
       return {
         ...entry,
         value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
-      }
+      } as JsWebPosthogSettingChoice
     }
 
     return entry
@@ -113,7 +113,7 @@ export default function JsWebEvents() {
         return {
           ...entry,
           value: value,
-        }
+        } as JsWebPosthogSettingChoice
       })
     );
   };
