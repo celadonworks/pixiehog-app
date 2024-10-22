@@ -1,6 +1,48 @@
+import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import type { JsWebPosthogSettingChoice } from './interface/setting-row.interface';
 
-export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = [
+
+export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = Object.entries(JsWebPosthogConfigSchema.shape).map<JsWebPosthogSettingChoice>(([key,item]) =>{
+  let testingItem = item
+  const defaultValue = testingItem._def.defaultValue()
+  console.log("defaultValue");
+  console.log(defaultValue);
+  
+  while( testingItem.isOptional() || testingItem.isNullable()){
+    testingItem = testingItem._def.innerType
+  }
+  const types = {
+    ZodEnum: "Select",
+    ZodString: "Text",
+    ZodNumber: "Number",
+    ZodBoolean: "Checkbox",
+    ZodArray: "List"
+  }
+  
+  console.log("defaultValue----");
+  console.log(defaultValue);
+  
+  if(testingItem._def.typeName == "ZodEnum"){
+    return {
+      key: key,
+      description: testingItem._def.description || '',
+      filteredOut: false,
+      type: types[testingItem._def.typeName],
+      value: defaultValue,
+      selectOptions: testingItem._def.values,
+    }
+  }
+  return {
+    key: key,
+    description: testingItem._def.description || '',
+    filteredOut: false,
+    type: types[testingItem._def.typeName as 'ZodString' || 'ZodNumber' || 'ZodBoolean'],
+    value: defaultValue,
+
+  }
+  }) as JsWebPosthogSettingChoice[]
+    
+/* export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = [
   {
     key: 'api_host',
     description: 'URL of your PostHog instance.',
@@ -10,11 +52,11 @@ export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = [
   },
   {
     key: 'ui_host',
-    description:
-      "If using a reverse proxy for 'api_host' then this should be the actual PostHog app URL (e.g. https://us.posthog.com). This ensures that links to PostHog point to the correct host.",
+    description: JsWebPosthogConfigSchema.shape.ui_host._def.description as string,
     filteredOut: false,
-    type: 'Text',
-    value: '',
+    type: 'Select',
+    selectOptions: JsWebPosthogConfigSchema.shape.ui_host._def.innerType._def.innerType.options,
+    value: JsWebPosthogConfigSchema.shape.ui_host._def.defaultValue() as string,
   },
   {
     key: 'capture_pageview',
@@ -180,4 +222,4 @@ export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = [
     type: 'List',
     value: []
   },
-];
+]; */
