@@ -23,7 +23,7 @@ import type { JsWebPosthogConfig } from '../../../common/dto/js-web-settings.dto
 import { defaultJsWebPosthogSettings } from './default-js-web-settings';
 import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggle.dto';
-import JsWebPosthogHeader from './Header';
+import FeatureStatusManager from '../../../common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -212,7 +212,7 @@ export default function JsWebEvents() {
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <JsWebPosthogHeader
+              <FeatureStatusManager
                 posthogApiKey={currentAppInstallation.posthog_api_key?.value}
                 settings={jsWebPosthogSettings}
                 featureEnabled={jsWebPosthogFeatureEnabled}
