@@ -196,12 +196,11 @@ export default function JsWebEvents() {
   };
 
   const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
-  const formattedJsWebPosthogSettings = Object.fromEntries(jsWebPosthogSettings.map(({key, value}) => [key, value] ))
-  const diff = detailedDiff(jsWebPosthogSettingsMetafieldValue || {}, formattedJsWebPosthogSettings)
-  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureToggleInitialState;
+  const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings)  
+  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState;
   return (
     <Page
-      title="Web Pixel Settings"
+      title="JS Web Config"
       primaryAction={{
         onAction: submitSettings,
         content: 'Save',
