@@ -14,17 +14,18 @@ import {
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
-import MultiChoiceSelector from './MultiChoiceSelector';
+import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
 import { json, useFetcher, useLoaderData } from '@remix-run/react';
 import type { WebPixelSettingChoice } from './interface/setting-row.interface';
 import { WebPixelEventsSettingsSchema } from '../../../common/dto/web-pixel-events-settings.dto';
 import { metafieldsSet } from '../../common.server/mutations/metafields-set';
 import { Constant } from '../../../common/constant';
-import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
+import type { WebPixelEventsSettings } from '../../../common/dto/web-pixel-events-settings.dto';
 import { recalculateWebPixel } from '../../common.server/procedures/recalculate-web-pixel';
 import { defaultWebPixelSettings } from './default-web-pixel-settings';
-import WebPixelSettingsHeader from './Header';
 import { WebPixelFeatureToggleSchema } from '../../../common/dto/web-pixel-feature-toggle.dto';
+import FeatureStatusManager from 'common/components/FeatureStatusManager';
+import { detailedDiff } from 'deep-object-diff';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
@@ -33,30 +34,30 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-  const payload = Object.fromEntries(formData.entries());
+  const payload = await request.json()
   const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
       .map(([key, errors]) => {
-        return `${key}: ${errors.join(' & ')}`;
+        return `${key}`;
       })
-      .join('|\n');
-    return json({ ok: false, message }, { status: 400 });
+      .join(', ');
+    return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
   }
   
   const { admin } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
   const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
+ 
   const responseMetafieldsSet = await metafieldsSet(admin.graphql, 
     [
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: currentAppInstallation.id,
-      type: 'single_line_text_field',
-      value: web_pixel_feature_toggle,
+      type: 'json',
+      value: web_pixel_feature_toggle.toString(),
     },
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
@@ -66,12 +67,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       type: 'json',
     },
   ]);
-  console.dir(
-    { responseMetafieldsSet },
-    {
-      depth: 4,
-    }
-  );
 
   const responseRecalculate = await recalculateWebPixel(admin.graphql);
   if (!responseRecalculate) {
@@ -86,32 +81,46 @@ export default function WebPixelEvents() {
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
-    | WebPixelSettings;
+    | WebPixelEventsSettings;
 
-  const webPixelSettingsState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
-    return {
-      ...entry,
-      selected: webPixelSettingsMetafieldValue?.[entry.key] === 'true',
-    };
-  });
-  const [webPixelSettings, setWebPixelSettings] = useState(webPixelSettingsState);
+  const webPixelSettingsInitialState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
+    if(webPixelSettingsMetafieldValue?.[entry.key]){
+      return {
+        ...entry,
+        value: webPixelSettingsMetafieldValue?.[entry.key] === true,
+      }
+    }
+      return entry
+    }
+    
+  );
 
-  const handleWebPixelSettingChange = (key: string) => {
+  console.log(webPixelSettingsInitialState);
+  
+  const [webPixelSettings, setWebPixelSettings] = useState(webPixelSettingsInitialState);
+
+  const handleWebPixelSettingChange = (key: string,value?: string | number | string[]) => {
     setWebPixelSettings(
       webPixelSettings.map<WebPixelSettingChoice>((entry) => {
         console.log({ clickedKey: key, elementKey: entry.key });
         if (entry.key != key) {
           return entry;
         }
+        if(entry.type === "Checkbox"){
+          return {
+            ...entry,
+            value: !entry.value,
+          }
+        }
         return {
           ...entry,
-          selected: !entry.selected,
+          value: value,
         };
       })
     );
   };
 
-  const selectedWebPixelSettings = webPixelSettings.filter((entry) => entry.selected);
+  const selectedWebPixelSettings = webPixelSettings.filter((entry) => entry.type === "Checkbox" && entry.value);
 
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = useCallback((selectedTabIndex: number) => setSelectedTab(selectedTabIndex), []);
@@ -147,22 +156,6 @@ export default function WebPixelEvents() {
     [webPixelSettings]
   );
 
-  const submitSettings = () => {
-    fetcher.submit(
-      {
-        ...Object.fromEntries(
-          webPixelSettings.map(({ key, selected }) => {
-            return [key, selected];
-          })
-        ),
-        web_pixel_feature_toggle: webPixelFeatureEnabled,
-      },
-      {
-        method: 'POST',
-      }
-    );
-  };
-
   useEffect(() => {
     const data = fetcher.data as { ok: false; message: string } | { ok: true; message: string } | null;
     if (!data) {
@@ -186,18 +179,32 @@ export default function WebPixelEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
-  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.value == 'true'
+  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.value == "true"
   const [webPixelFeatureEnabled, setWebPixelFeatureEnabled] = useState(
     webPixelFeatureToggleInitialState
   );
 
-  const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
 
-  const dirty = webPixelSettings.some((entry) => {
-    const metafieldValue = webPixelSettingsMetafieldValue?.[entry.key] || 'false';
-    return String(entry.selected) != metafieldValue;
-  }) || webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
-  console.log({ dirty });
+  const submitSettings = () => {
+    fetcher.submit(
+      {
+        ...Object.fromEntries(
+          webPixelSettings.map(({ key, value }) => {
+            return [key, value];
+          })
+        ),
+        web_pixel_feature_toggle: webPixelFeatureEnabled,
+      },
+      {
+        method: 'POST',
+        encType: "application/json"
+      }
+    );
+  };
+  const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
+  const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings)  
+  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
+  const allEventsDisabled = webPixelSettings.every((entry) => !entry.value)
   return (
     <Page
       title="Web Pixel Settings"
@@ -212,13 +219,20 @@ export default function WebPixelEvents() {
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-              <WebPixelSettingsHeader
-                webPixelFeatureToggleInitialState={webPixelFeatureToggleInitialState}
-                webPixelSettingsMetafieldValue={webPixelSettingsMetafieldValue}
+
+              <FeatureStatusManager
                 posthogApiKey={currentAppInstallation.posthog_api_key?.value}
-                webPixelFeatureEnabled={webPixelFeatureEnabled}
-                handleWebPixelFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
-                webPixelSettings={webPixelSettings}
+                settings={webPixelSettings}
+                featureEnabled={webPixelFeatureEnabled}
+                handleFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
+                dirty= {dirty}
+                customAction={{
+                  trigger : allEventsDisabled,
+                  badgeText:"Action required 2 ",
+                  badgeTone: "attention",
+                  badgeToneOnDirty: "critical",
+                  bannerMessage: "Select at least 1 event from the list below."
+                }}
               />
               <Divider />
               <Tabs disabled={!webPixelFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
@@ -233,9 +247,9 @@ export default function WebPixelEvents() {
                     prefix={<Icon source={SearchIcon}></Icon>}
                   />
                   <MultiChoiceSelector
-                    webPixelSettings={tabs[selectedTab].id === 'all' ? webPixelSettings : selectedWebPixelSettings}
+                    settings={tabs[selectedTab].id === 'all' ? webPixelSettings  : selectedWebPixelSettings}
                     onChange={handleWebPixelSettingChange}
-                    webPixelFeatureEnabled={webPixelFeatureEnabled}
+                    featureEnabled={webPixelFeatureEnabled}
                   ></MultiChoiceSelector>
                 </BlockStack>
               </Tabs>

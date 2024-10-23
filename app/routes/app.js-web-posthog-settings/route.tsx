@@ -14,7 +14,7 @@ import {
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
-import MultiChoiceSelector from './MultiChoiceSelector';
+import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
 import { json, useFetcher, useLoaderData } from '@remix-run/react';
 import type { JsWebPosthogSettingChoice } from './interface/setting-row.interface';
 import { metafieldsSet } from '../../common.server/mutations/metafields-set';
@@ -32,10 +32,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  //const formData = await request.formData();
   const payload = await request.json()
-  //const payload = Object.fromEntries(formData.entries());
-
   const dtoResult = JsWebPosthogConfigSchema.merge(JsWebPosthogFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)

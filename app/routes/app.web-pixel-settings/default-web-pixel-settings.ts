@@ -1,6 +1,47 @@
 import type { WebPixelSettingChoice } from "./interface/setting-row.interface";
+import { WebPixelEventsSettingsSchema } from 'common/dto/web-pixel-events-settings.dto';
 
-export const defaultWebPixelSettings: WebPixelSettingChoice[] = [
+
+export const defaultWebPixelSettings: WebPixelSettingChoice[] = Object.entries(WebPixelEventsSettingsSchema.shape).map<WebPixelSettingChoice>(([key,item]) =>{
+  let testingItem = item
+  const defaultValue = testingItem._def.defaultValue()
+  console.log("defaultValue");
+  console.log(defaultValue);
+  
+  while( testingItem.isOptional() || testingItem.isNullable()){
+    testingItem = testingItem._def.innerType
+  }
+  const types = {
+    ZodEnum: "Select",
+    ZodString: "Text",
+    ZodNumber: "Number",
+    ZodBoolean: "Checkbox",
+    ZodArray: "List"
+  }
+  
+  console.log("defaultValue----");
+  console.log(defaultValue);
+  
+  if(testingItem._def.typeName == "ZodEnum"){
+    return {
+      key: key,
+      description: testingItem._def.description || '',
+      filteredOut: false,
+      type: types[testingItem._def.typeName],
+      value: defaultValue,
+      selectOptions: testingItem._def.values,
+    }
+  }
+  return {
+    key: key,
+    description: testingItem._def.description || '',
+    filteredOut: false,
+    type: types[testingItem._def.typeName as 'ZodString' || 'ZodNumber' || 'ZodBoolean'],
+    value: defaultValue,
+
+  }
+  }) as WebPixelSettingChoice[]
+/* export const defaultWebPixelSettings: WebPixelSettingChoice[] = [
   {
     key: 'cart_viewed',
     description: 'event logs an instance where a customer visited the cart page.',
@@ -121,4 +162,4 @@ export const defaultWebPixelSettings: WebPixelSettingChoice[] = [
     selected: false,
     filteredOut: false,
   },
-];
+]; */

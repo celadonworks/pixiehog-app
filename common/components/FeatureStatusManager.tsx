@@ -1,10 +1,9 @@
 import { Badge, Banner, Box, Button, InlineStack, Link, List, Text } from '@shopify/polaris';
-import type { JsWebPosthogSettingChoice } from '../../app/routes/app.js-web-posthog-settings/interface/setting-row.interface';
-
+import type { Settings } from '../../common/interfaces/feature-settings.interface'
 export interface FeatureStatusManagerProps {
   posthogApiKey?: string;
   featureEnabled: boolean;
-  settings: JsWebPosthogSettingChoice[];
+  settings: Settings[];
   dirty: boolean,
   customAction?: CustomeAction,
   handleFeatureEnabledToggle: () => void;
@@ -86,6 +85,7 @@ export default function FeatureStatusManager({
   settings,
   dirty,
   handleFeatureEnabledToggle,
+  customAction
 }: FeatureStatusManagerProps) {
  
   return (
@@ -100,6 +100,7 @@ export default function FeatureStatusManager({
             posthogApiKey={posthogApiKey}
             featureEnabled={featureEnabled}
             settings={settings}
+            customAction= {customAction}
           />
         </InlineStack>
 
@@ -121,6 +122,7 @@ export default function FeatureStatusManager({
         posthogApiKey={posthogApiKey}
         featureEnabled={featureEnabled}
         settings={settings}
+        customAction={customAction}
       />
     </Box>
   );
