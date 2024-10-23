@@ -81,7 +81,7 @@ export default function JsWebEvents() {
     | null
     | JsWebPosthogConfig;
     
-  const jsWebPosthogSettingsState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
+  const jsWebPosthogSettingsInitialState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
     if(jsWebPosthogSettingsMetafieldValue?.[entry.key]){
       return {
         ...entry,
@@ -93,7 +93,7 @@ export default function JsWebEvents() {
  
   });
 
-  const [jsWebPosthogSettings, setJsWebPosthogSettings] = useState(jsWebPosthogSettingsState);
+  const [jsWebPosthogSettings, setJsWebPosthogSettings] = useState(jsWebPosthogSettingsInitialState);
 
   const handleJsWebPosthogSettingChange = (key: string, value?: string | number | string[]) => {
     setJsWebPosthogSettings(
@@ -171,9 +171,9 @@ export default function JsWebEvents() {
   }, [fetcher, fetcher.data, fetcher.state]);
 
   
-  const jsWebPosthogFeatureToggleInitialState = currentAppInstallation.js_web_posthog_feature_toggle?.jsonValue == true
+  const jsWebPosthogFeatureEnabledInitialState = currentAppInstallation.js_web_posthog_feature_toggle?.jsonValue == true
   const [jsWebPosthogFeatureEnabled, setjsWebPosthogFeatureEnabled] = useState(
-    jsWebPosthogFeatureToggleInitialState
+    jsWebPosthogFeatureEnabledInitialState
   );
 
   
@@ -214,12 +214,11 @@ export default function JsWebEvents() {
           <Card>
             <BlockStack gap="500">
               <JsWebPosthogHeader
-                jsWebPosthogFeatureToggleInitialState={jsWebPosthogFeatureToggleInitialState}
-                jsWebPosthogSettingsMetafieldValue={jsWebPosthogSettingsMetafieldValue}
                 posthogApiKey={currentAppInstallation.posthog_api_key?.value}
-                jsWebPosthogFeatureEnabled={jsWebPosthogFeatureEnabled}
-                handleJsWebPosthogFeatureEnabledToggle={handleJsWebPosthogFeatureEnabledToggle}
-                jsWebPosthogSettings={jsWebPosthogSettings}
+                settings={jsWebPosthogSettings}
+                featureEnabled={jsWebPosthogFeatureEnabled}
+                handleFeatureEnabledToggle={handleJsWebPosthogFeatureEnabledToggle}
+                dirty= {dirty}
               />
               <Divider />
               <Tabs disabled={!jsWebPosthogFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
