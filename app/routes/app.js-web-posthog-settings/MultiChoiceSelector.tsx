@@ -2,9 +2,10 @@ import { BlockStack, Box, Card, Checkbox, Icon, InlineGrid, Scrollable, Text } f
 import { SearchIcon } from '@shopify/polaris-icons';
 import type { JsWebPosthogConfig } from "../../../common/dto/js-web-settings.dto"
 import type { JsWebPosthogSettingChoice } from "./interface/setting-row.interface"
-import List from './List';
-import TextInput from './TextInput';
-import SelectInput from './SelectInput';
+import List from '../../../common/components/List';
+import TextInput from '../../../common/components/TextInput';
+import SelectInput from '../../../common/components/SelectInput';
+import type { SettingsTypeNumber, SettingsTypeSelect, SettingsTypeText } from 'common/interfaces/feature-settings.interface';
 
 export interface settings {
   key: keyof JsWebPosthogConfig;
@@ -44,7 +45,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                         <Checkbox 
                           disabled={!featureEnabled}
                           label={<code>{entry.key}</code>}
-                          checked={entry.value}
+                          checked={entry.value as boolean}
                           id={entry.key}
                           key={entry.key}
                           name={entry.key}
@@ -55,7 +56,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                       {
                         entry.type === "Text" && (
                         <TextInput
-                          entry={entry}
+                          entry={entry as SettingsTypeText}
                           onChange={onChange}
                           featureEnabled={featureEnabled}
                           type='text'
@@ -65,7 +66,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                       {
                         entry.type === "Number" && (
                           <TextInput
-                            entry={entry}
+                            entry={entry as SettingsTypeNumber}
                             onChange={onChange}
                             featureEnabled={featureEnabled}
                             type='number'
@@ -75,7 +76,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                       {
                         entry.type === "Select" && (
                         <SelectInput
-                          entry={entry}
+                          entry={entry as SettingsTypeSelect}
                           onChange={onChange}
                           featureEnabled={featureEnabled}
                         />
@@ -85,10 +86,10 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                         entry.type === "List" &&
                         (
                           <List
-                          entry={entry}
+                          entry={entry as SettingsTypeList}
                           onChange={onChange}
                           featureEnabled= {featureEnabled}
-                          ></List>
+                          />
                         )
                       }
                      

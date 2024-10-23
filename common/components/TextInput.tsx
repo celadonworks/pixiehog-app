@@ -1,9 +1,9 @@
 import { TextField } from '@shopify/polaris';
-import type {JsWebPosthogTypeTextSettings, JsWebPosthogTypeNumberSettings } from "./interface/setting-row.interface"
 import { useCallback, useState } from 'react';
+import type { SettingsTypeText, SettingsTypeNumber } from '../interfaces/feature-settings.interface'
 
 export interface TextFieldProps {
-  entry: JsWebPosthogTypeTextSettings | JsWebPosthogTypeNumberSettings;
+  entry: SettingsTypeText | SettingsTypeNumber;
   onChange: (key: string, value?: string | number | string[]) => void;
   featureEnabled: boolean;
   type: "number" | "text"

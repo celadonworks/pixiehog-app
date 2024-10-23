@@ -1,9 +1,10 @@
 import { BlockStack, Combobox, Listbox, Tag } from '@shopify/polaris';
-import type {JsWebPosthogTypeListSettings } from "./interface/setting-row.interface"
+import type { SettingsTypeList } from '../interfaces/feature-settings.interface'
+
 import { useCallback, useState } from 'react';
 
 export interface ListProps {
-  entry: JsWebPosthogTypeListSettings;
+  entry: SettingsTypeList;
   onChange: (key: string, value?: string | number | string[]) => void;
   featureEnabled: boolean;
 }

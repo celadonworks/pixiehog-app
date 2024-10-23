@@ -1,9 +1,9 @@
 import { Select } from '@shopify/polaris';
-import type {JsWebPosthogTypeSelectSettings } from "./interface/setting-row.interface"
+import type { SettingsTypeSelect } from '../interfaces/feature-settings.interface'
 import { useCallback, useState } from 'react';
 
 export interface SelectProps {
-  entry:  JsWebPosthogTypeSelectSettings;
+  entry:  SettingsTypeSelect;
   onChange: (key: string, value?: string | number | string[]) => void;
   featureEnabled: boolean;
 }
