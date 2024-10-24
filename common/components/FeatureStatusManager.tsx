@@ -1,15 +1,14 @@
-import { Badge, Banner, Box, Button, InlineStack, Link, List, Text } from '@shopify/polaris';
-import type { Settings } from '../../common/interfaces/feature-settings.interface'
+import { Badge, Banner, Box, Button, InlineStack, List, Text } from '@shopify/polaris';
 export interface FeatureStatusManagerProps {
-  posthogApiKey?: string;
   featureEnabled: boolean;
-  settings: Settings[];
   dirty: boolean,
-  customAction?: CustomeAction,
+  customActions?: CustomAction[],
+  bannerTitle?: string,
+  bannerTone?: 'success' | 'info' | 'warning' | 'critical',
   handleFeatureEnabledToggle: () => void;
 }
 
-interface CustomeAction {
+interface CustomAction {
   trigger: boolean,
   badgeText: string,
   badgeTone: BadgeTone
@@ -20,12 +19,10 @@ type BadgeTone = 'info' | 'success' | 'warning' | 'critical' | 'attention' | 'ne
 
 
 function StatusBadge({
-  posthogApiKey,
   featureEnabled,
-  settings,
-  customAction,
+  customActions,
   dirty
-}: Pick<FeatureStatusManagerProps, 'posthogApiKey' | 'featureEnabled' | 'settings' | 'customAction'> & { dirty: boolean}) {
+}: Pick<FeatureStatusManagerProps, 'featureEnabled' | 'customActions'> & { dirty: boolean}) {
   if (!featureEnabled) {
     return (
       <Badge size="large" tone={dirty ? 'attention' : 'enabled'}>
@@ -33,20 +30,19 @@ function StatusBadge({
       </Badge>
     );
   }
-  if (!posthogApiKey) {
-    return (
-      <Badge size="large" tone={dirty ? 'attention' : 'critical'}>
-        Action required
-      </Badge>
-    );
+  if(customActions?.length){
+    for(const customAction of customActions){
+      if(customAction?.trigger){
+        return (
+          <Badge size="large" tone={dirty ? customAction?.badgeToneOnDirty : customAction?.badgeTone}>
+            {customAction.badgeText}
+          </Badge>
+        );
+      }
+    }
   }
-  if(customAction?.trigger){
-    return (
-      <Badge size="large" tone={dirty ? customAction?.badgeToneOnDirty : customAction?.badgeTone}>
-        {customAction.badgeText}
-      </Badge>
-    );
-  }
+  
+ 
 
   return (
     <Badge size="large" tone={dirty ? 'attention' : 'success'}>
@@ -56,23 +52,31 @@ function StatusBadge({
 }
 
 function RequiredActionsBanner({
-  posthogApiKey,
   featureEnabled,
-  customAction,
-  settings,
-}: Pick<FeatureStatusManagerProps, 'posthogApiKey' | 'featureEnabled' | 'settings' | 'customAction'>) {
+  customActions,
+  bannerTitle,
+  bannerTone
+}: Pick<FeatureStatusManagerProps, 'featureEnabled' | 'customActions' | 'bannerTitle' | 'bannerTone'>) {
   if (!featureEnabled) {
     return;
   }
-  if (posthogApiKey) {
-    return;
+  if(!customActions?.length){
+    return
   }
+  const customActionsTriggerOn = customActions.filter((customAction) => customAction.trigger)
+  if(!customActionsTriggerOn.length){
+    return
+  }
+
   return (
     <Box paddingBlockStart={'200'} width="100%">
-      <Banner title="The following requirements need to be meet to finalize the Web Pixel setup:" tone="warning">
+      <Banner title={bannerTitle || "The following requirements need to be meet" } tone= { bannerTone || "warning"}>
         <List>
-          {!posthogApiKey && <List.Item>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</List.Item>}
-          {customAction?.trigger && <List.Item>{customAction.bannerMessage}</List.Item>}
+          {
+            customActionsTriggerOn.map((customAction,index) => {
+              return (<List.Item key={index}>{customAction.bannerMessage}</List.Item>)
+            })
+          }
         </List>
       </Banner>
     </Box>
@@ -80,12 +84,12 @@ function RequiredActionsBanner({
 }
 
 export default function FeatureStatusManager({
-  posthogApiKey,
   featureEnabled,
-  settings,
   dirty,
+  bannerTitle,
+  bannerTone,
+  customActions,
   handleFeatureEnabledToggle,
-  customAction
 }: FeatureStatusManagerProps) {
  
   return (
@@ -97,10 +101,8 @@ export default function FeatureStatusManager({
           </Text>
           <StatusBadge
             dirty={dirty}
-            posthogApiKey={posthogApiKey}
             featureEnabled={featureEnabled}
-            settings={settings}
-            customAction= {customAction}
+            customActions= {customActions}
           />
         </InlineStack>
 
@@ -119,10 +121,10 @@ export default function FeatureStatusManager({
       </InlineStack>
 
       <RequiredActionsBanner
-        posthogApiKey={posthogApiKey}
         featureEnabled={featureEnabled}
-        settings={settings}
-        customAction={customAction}
+        customActions={customActions}
+        bannerTitle={bannerTitle}
+        bannerTone={bannerTone}
       />
     </Box>
   );
