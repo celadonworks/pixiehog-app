@@ -10,6 +10,7 @@ import {
   TextField,
   Icon,
   Box,
+  Link,
 } from '@shopify/polaris';
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
@@ -172,8 +173,7 @@ export default function JsWebEvents() {
   const [jsWebPosthogFeatureEnabled, setjsWebPosthogFeatureEnabled] = useState(
     jsWebPosthogFeatureEnabledInitialState
   );
-
-  
+  const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
 
   const submitSettings = () => {
     fetcher.submit(
@@ -192,7 +192,7 @@ export default function JsWebEvents() {
     );
   };
 
-  const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
+  
   const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings)  
   const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState;
   return (
@@ -210,11 +210,20 @@ export default function JsWebEvents() {
           <Card>
             <BlockStack gap="500">
               <FeatureStatusManager
-                posthogApiKey={currentAppInstallation.posthog_api_key?.value}
-                settings={jsWebPosthogSettings}
                 featureEnabled={jsWebPosthogFeatureEnabled}
                 handleFeatureEnabledToggle={handleJsWebPosthogFeatureEnabledToggle}
                 dirty= {dirty}
+                bannerTitle='The following requirements need to be meet to finalize the Javascript Web setup:'
+                bannerTone='warning'
+                customActions={[
+                  {
+                    trigger : !currentAppInstallation.posthog_api_key?.value,
+                    badgeText:"Action required",
+                    badgeTone: "attention",
+                    badgeToneOnDirty: "critical",
+                    bannerMessage: <div>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</div>
+                  },
+                ]}
               />
               <Divider />
               <Tabs disabled={!jsWebPosthogFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
@@ -232,6 +241,7 @@ export default function JsWebEvents() {
                     settings={tabs[selectedTab].id === 'all' ? jsWebPosthogSettings : selectedJsWebPosthogSettings}
                     onChange={handleJsWebPosthogSettingChange}
                     featureEnabled={jsWebPosthogFeatureEnabled}
+                    
                   ></MultiChoiceSelector>
                 </BlockStack>
               </Tabs>

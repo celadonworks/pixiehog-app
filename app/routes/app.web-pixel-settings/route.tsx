@@ -10,6 +10,7 @@ import {
   TextField,
   Icon,
   Box,
+  Link
 } from '@shopify/polaris';
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
@@ -94,8 +95,6 @@ export default function WebPixelEvents() {
     }
     
   );
-
-  console.log(webPixelSettingsInitialState);
   
   const [webPixelSettings, setWebPixelSettings] = useState(webPixelSettingsInitialState);
 
@@ -179,10 +178,11 @@ export default function WebPixelEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
-  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.value == "true"
+  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.jsonValue == true
   const [webPixelFeatureEnabled, setWebPixelFeatureEnabled] = useState(
     webPixelFeatureToggleInitialState
   );
+  const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
 
 
   const submitSettings = () => {
@@ -201,7 +201,6 @@ export default function WebPixelEvents() {
       }
     );
   };
-  const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
   const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings)  
   const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
   const allEventsDisabled = webPixelSettings.every((entry) => !entry.value)
@@ -221,18 +220,27 @@ export default function WebPixelEvents() {
             <BlockStack gap="500">
 
               <FeatureStatusManager
-                posthogApiKey={currentAppInstallation.posthog_api_key?.value}
-                settings={webPixelSettings}
                 featureEnabled={webPixelFeatureEnabled}
                 handleFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
                 dirty= {dirty}
-                customAction={{
-                  trigger : allEventsDisabled,
-                  badgeText:"Action required 2 ",
-                  badgeTone: "attention",
-                  badgeToneOnDirty: "critical",
-                  bannerMessage: "Select at least 1 event from the list below."
-                }}
+                bannerTitle='The following requirements need to be meet to finalize the Web Pixel setup:'
+                bannerTone='warning'
+                customActions={[
+                  {
+                    trigger : !currentAppInstallation.posthog_api_key?.value,
+                    badgeText:"Action required",
+                    badgeTone: "attention",
+                    badgeToneOnDirty: "critical",
+                    bannerMessage: <div>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</div>
+                  },
+                  {
+                    trigger : allEventsDisabled,
+                    badgeText:"Action required",
+                    badgeTone: "attention",
+                    badgeToneOnDirty: "critical",
+                    bannerMessage: "Select at least 1 event from the list below."
+                  }
+              ]}
               />
               <Divider />
               <Tabs disabled={!webPixelFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
