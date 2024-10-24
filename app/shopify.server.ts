@@ -31,7 +31,7 @@ const shopify = shopifyApp({
             const jsWebConfigDefault = JSWebConfigSchema.parse({})
             await metafieldsSet(admin.graphql, [
               {
-                key: Constant.METAFIELD_KEY_JS_WEB_FEATURE_TOGGLE,
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
                 namespace: Constant.METAFIELD_NAMESPACE,
                 ownerId: currentAppInstallation.id,
                 type: 'single_line_text_field',
