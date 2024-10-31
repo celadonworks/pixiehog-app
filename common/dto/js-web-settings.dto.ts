@@ -1,6 +1,6 @@
 import { z } from 'zod';
 export const JsWebPosthogConfigSchema = z.object({
-  api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(''),
+  /* api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(''), */
 
   ui_host: z
     .enum(['https://us.posthog.com', 'https://eu.posthog.com'])

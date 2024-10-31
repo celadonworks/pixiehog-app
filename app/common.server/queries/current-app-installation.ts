@@ -23,6 +23,7 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
       query currentAppInstallation(
         $namespace: String!
         $posthogApiKeyKey: String!
+        $posthogApiHostKey: String!,
         $webPixelEventsSettingsKey: String!
         $webPixelFeatureToggle: String!
         $jsWebPosthogConfig: String!
@@ -34,6 +35,11 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
             id
           }
           posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {
+            key
+            value
+            type
+          }
+          posthog_api_host: metafield(namespace: $namespace, key: $posthogApiHostKey) {
             key
             value
             type
@@ -68,6 +74,7 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
       variables: {
         namespace: Constant.METAFIELD_NAMESPACE,
         posthogApiKeyKey: Constant.METAFIELD_KEY_POSTHOG_API_KEY,
+        posthogApiHostKey: Constant.METAFIELD_KEY_POSTHOG_API_HOST,
         webPixelEventsSettingsKey: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
         webPixelFeatureToggle: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
         jsWebPosthogConfig: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
