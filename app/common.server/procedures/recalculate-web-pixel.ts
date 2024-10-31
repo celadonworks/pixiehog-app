@@ -14,17 +14,18 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   const shopifyWebPixel = await queryWebPixel(graphq);
   const metafieldWebPixelSettings = currentAppInstallation.web_pixel_settings?.jsonValue;
   const posthogApiKey = currentAppInstallation.posthog_api_key?.value;
+  const posthogApihost = currentAppInstallation.posthog_api_host?.value;
 
-  const webPixelFeatureToggle = currentAppInstallation.web_pixel_feature_toggle?.value == true
+  const webPixelFeatureToggle = currentAppInstallation.web_pixel_feature_toggle?.jsonValue == true
   const dtoResult = WebPixelSettingsSchema.safeParse({
     ...(posthogApiKey && {
       posthog_api_key: posthogApiKey,
+      posthog_api_host: posthogApihost,
     }),
     ...(metafieldWebPixelSettings && {
       ...metafieldWebPixelSettings,
     }),
   } as WebPixelSettings);
-
 
   if (!webPixelFeatureToggle) {
     if (!shopifyWebPixel?.id) {
@@ -63,17 +64,21 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   // if we have at least one event active and post_hog_api_key
   // update or enable webPixel
 
+  const convertedDtoResultData = Object.fromEntries(
+    Object.entries(dtoResult.data).map(([key, value]) => [key, String(value)])
+  );
   if (shopifyWebPixel?.id) {
     // we already have a web pixel
     // update settings
-    const convertedDtoResultData = Object.fromEntries(
-      Object.entries(dtoResult.data).map(([key, value]) => [key, String(value)])
-    );
+    
     
     await webPixelUpdate(graphq, shopifyWebPixel.id, convertedDtoResultData);
     return { status: 'updated' };
   }
+
   // create web pixel
-  await webPixelCreate(graphq, dtoResult.data);
+  await webPixelCreate(graphq, convertedDtoResultData);
+
+  
   return { status: 'connected' };
 }

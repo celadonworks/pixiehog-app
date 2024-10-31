@@ -18,6 +18,11 @@ name = "Posthog Project API Key"
 description = "posthog_api_key"
 type = "single_line_text_field"
 
+[settings.fields.posthog_api_host]
+name = "Posthog Project API Host"
+description = "posthog_api_host"
+type = "single_line_text_field"
+
 [settings.fields.cart_viewed]
 name = "Process cart_viewed Event"
 description = "Process the cart_viewed event - where a customer visited the cart page."

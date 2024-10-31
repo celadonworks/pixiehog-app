@@ -13,13 +13,12 @@ register(async (extensionApi) => {
     customerPrivacy,
   } = extensionApi;
   const settings = extensionApi.settings as WebPixelSettings;
-  const { posthog_api_key } = settings;
+  const { posthog_api_key, posthog_api_host } = settings;
   if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
 
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
-  const posthogHost = `https://${init.data.shop.myshopifyDomain}/tools/ph-analytics`;
 
   async function resolveDistinctId() {
     const POSTHOG_KEY = `ph_${posthog_api_key}_posthog`;
@@ -39,7 +38,7 @@ register(async (extensionApi) => {
 
   const posthog = new PostHog(posthog_api_key, {
     fetch: fetch,
-    host: true ? 'https://eu.i.posthog.com' : posthogHost,
+    host: posthog_api_host,
     persistence: 'memory',
     flushAt: 1,
     flushInterval: 0,
