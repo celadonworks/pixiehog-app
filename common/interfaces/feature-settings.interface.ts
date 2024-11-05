@@ -3,34 +3,39 @@ export enum SettingType {
   Number = 'Number',
   Checkbox = 'Checkbox',
   Text = 'Text',
-  List = 'List'
+  List = 'List',
 }
-export interface SettingsBase {
-  key: KeyType;
-  description: string; 
-  filteredOut: boolean,
-  type: SettingType
+export interface SettingsBase<T = string> {
+  key: T;
+  description: string;
+  filteredOut: boolean;
+  type: SettingType;
 }
-export interface SettingsTypeSelect extends SettingsBase {
+export interface SettingsTypeSelect<T> extends SettingsBase<T> {
   type: SettingType.Select;
   selectOptions: string[];
-  value: string
+  value: string;
 }
-export interface SettingsTypeNumber extends SettingsBase {
+export interface SettingsTypeNumber<T> extends SettingsBase<T> {
   type: SettingType.Number;
-  value: number
+  value: number;
 }
-export interface SettingsTypeCheckbox extends SettingsBase {
+export interface SettingsTypeCheckbox<T> extends SettingsBase<T> {
   type: SettingType.Checkbox;
   value: boolean;
 }
-export interface SettingsTypeText extends SettingsBase{
+export interface SettingsTypeText<T> extends SettingsBase<T> {
   type: SettingType.Text;
-  value: string
+  value: string;
 }
-export interface SettingsTypeList extends SettingsBase {
+export interface SettingsTypeList<T> extends SettingsBase<T> {
   type: SettingType.List;
-  value: string[]
+  value: string[];
 }
 
-export type Settings = SettingsTypeSelect | SettingsTypeNumber | SettingsTypeCheckbox | SettingsTypeText | SettingsTypeList;
+export type Settings<T = string> =
+  | SettingsTypeSelect<T>
+  | SettingsTypeNumber<T>
+  | SettingsTypeCheckbox<T>
+  | SettingsTypeText<T>
+  | SettingsTypeList<T>;
