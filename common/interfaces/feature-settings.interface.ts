@@ -11,24 +11,24 @@ export interface SettingsBase<T = string> {
   filteredOut: boolean;
   type: SettingType;
 }
-export interface SettingsTypeSelect<T> extends SettingsBase<T> {
+export interface SettingsTypeSelect<T = string> extends SettingsBase<T> {
   type: SettingType.Select;
   selectOptions: string[];
   value: string;
 }
-export interface SettingsTypeNumber<T> extends SettingsBase<T> {
+export interface SettingsTypeNumber<T = string> extends SettingsBase<T> {
   type: SettingType.Number;
   value: number;
 }
-export interface SettingsTypeCheckbox<T> extends SettingsBase<T> {
+export interface SettingsTypeCheckbox<T = string> extends SettingsBase<T> {
   type: SettingType.Checkbox;
   value: boolean;
 }
-export interface SettingsTypeText<T> extends SettingsBase<T> {
+export interface SettingsTypeText<T = string> extends SettingsBase<T> {
   type: SettingType.Text;
   value: string;
 }
-export interface SettingsTypeList<T> extends SettingsBase<T> {
+export interface SettingsTypeList<T = string> extends SettingsBase<T> {
   type: SettingType.List;
   value: string[];
 }
