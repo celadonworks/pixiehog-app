@@ -15,6 +15,10 @@ include_config_on_deploy = true
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_customer_events,write_pixels"
 
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+
 [auth]
 redirect_urls = [
   "https://net-observation-taxation-interactive.trycloudflare.com/auth/callback",
