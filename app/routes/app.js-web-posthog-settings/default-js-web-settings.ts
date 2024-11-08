@@ -1,45 +1,44 @@
 import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import type { JsWebPosthogSettingChoice } from './interface/setting-row.interface';
+import { SettingType } from '../../../common/interfaces/feature-settings.interface';
 
 
 export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = Object.entries(JsWebPosthogConfigSchema.shape).map<JsWebPosthogSettingChoice>(([key,item]) =>{
-  let testingItem = item
+  let testingItem: any = item
   const defaultValue = testingItem._def.defaultValue()
-  console.log("defaultValue");
-  console.log(defaultValue);
+
   
   while( testingItem.isOptional() || testingItem.isNullable()){
     testingItem = testingItem._def.innerType
   }
   const types = {
-    ZodEnum: "Select",
-    ZodString: "Text",
-    ZodNumber: "Number",
-    ZodBoolean: "Checkbox",
-    ZodArray: "List"
-  }
+    ZodEnum: SettingType.Select,
+    ZodString: SettingType.Text,
+    ZodNumber: SettingType.Number,
+    ZodBoolean: SettingType.Checkbox,
+    ZodArray: SettingType.List
+  } as const;
   
-  console.log("defaultValue----");
-  console.log(defaultValue);
+
   
   if(testingItem._def.typeName == "ZodEnum"){
     return {
       key: key,
       description: testingItem._def.description || '',
       filteredOut: false,
-      type: types[testingItem._def.typeName],
+      type: types[testingItem._def.typeName as unknown as keyof typeof types] as SettingType,
       value: defaultValue,
       selectOptions: testingItem._def.values,
-    }
+    } as JsWebPosthogSettingChoice
   }
   return {
     key: key,
     description: testingItem._def.description || '',
     filteredOut: false,
-    type: types[testingItem._def.typeName as 'ZodString' || 'ZodNumber' || 'ZodBoolean'],
+    type: types[testingItem._def.typeName as unknown as keyof typeof types] as SettingType,
     value: defaultValue,
 
-  }
+  } as JsWebPosthogSettingChoice
   }) as JsWebPosthogSettingChoice[]
     
 /* export const defaultJsWebPosthogSettings: JsWebPosthogSettingChoice[] = [
