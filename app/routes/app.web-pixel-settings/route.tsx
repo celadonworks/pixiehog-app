@@ -89,7 +89,7 @@ export default function WebPixelEvents() {
       return {
         ...entry,
         value: webPixelSettingsMetafieldValue?.[entry.key] === true,
-      }
+      } as WebPixelSettingChoice
     }
       return entry
     }
@@ -114,7 +114,7 @@ export default function WebPixelEvents() {
         return {
           ...entry,
           value: value,
-        };
+        } as WebPixelSettingChoice;
       })
     );
   };

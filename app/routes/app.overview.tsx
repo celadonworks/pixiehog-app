@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, BlockStack, Card, TextField, Button,Text, Link, Select } from '@shopify/polaris';
+import { Page, Layout, BlockStack, Card, TextField, Button,Text, Link, Select, Box } from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -186,7 +186,7 @@ export default function Index() {
       return {
         ...entry,
         value: webPixelSettingsMetafieldValue?.[entry.key] === true,
-      }
+      } as WebPixelSettingChoice
     }
     return entry
   });
@@ -353,6 +353,7 @@ export default function Index() {
             </Layout.Section>
           </Layout>
         </BlockStack>
+        <Box paddingBlockEnd={'800'}></Box>
       </Page>
   );
 }
