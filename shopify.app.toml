@@ -3,7 +3,7 @@
 client_id = "dccee050afcd89238a3d924aa7608d5c"
 name = "Posthog Analytics"
 handle = "posthog-analytics"
-application_url = "https://upon-bearing-coming-roots.trycloudflare.com"
+application_url = "https://net-observation-taxation-interactive.trycloudflare.com"
 embedded = true
 
 [build]
@@ -11,22 +11,26 @@ automatically_update_urls_on_dev = true
 dev_store_url = "celadonworksdev.myshopify.com"
 include_config_on_deploy = true
 
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_customer_events,write_pixels"
+scopes = "read_customer_events,read_themes,write_pixels"
 
 [auth]
 redirect_urls = [
-  "https://upon-bearing-coming-roots.trycloudflare.com/auth/callback",
-  "https://upon-bearing-coming-roots.trycloudflare.com/auth/shopify/callback",
-  "https://upon-bearing-coming-roots.trycloudflare.com/api/auth/callback"
+  "https://net-observation-taxation-interactive.trycloudflare.com/auth/callback",
+  "https://net-observation-taxation-interactive.trycloudflare.com/auth/shopify/callback",
+  "https://net-observation-taxation-interactive.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2024-10"
 
 [app_proxy]
-url = "https://upon-bearing-coming-roots.trycloudflare.com"
+url = "https://net-observation-taxation-interactive.trycloudflare.com"
 subpath = "ph-analytics"
 prefix = "tools"
 

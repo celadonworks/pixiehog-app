@@ -1,10 +1,11 @@
 import type { CustomerPrivacyPayload, StandardEvents } from '@shopify/web-pixels-extension';
 import { register } from '@shopify/web-pixels-extension';
-import type { WebPixelSettings } from './interface/interface';
 import { PostHog } from 'posthog-node';
 import { v7 as uuidv7 } from 'uuid';
+import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
+import { extractEventUUID } from './validate-uuid';
 
-register(async (extensionApi) => {
+register(async (extensionApi) => {  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
     analytics,
@@ -12,17 +13,16 @@ register(async (extensionApi) => {
     init,
     customerPrivacy,
   } = extensionApi;
-
-  const { ph_project_api_key } = extensionApi.settings as WebPixelSettings;
-  if (!ph_project_api_key) {
+  const settings = extensionApi.settings as WebPixelSettings;
+  const { posthog_api_key, posthog_api_host } = settings;
+  if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
 
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
-  const posthogHost = `https://${init.data.shop.myshopifyDomain}/tools/ph-analytics`;
 
   async function resolveDistinctId() {
-    const POSTHOG_KEY = `ph_${ph_project_api_key}_posthog`;
+    const POSTHOG_KEY = `ph_${posthog_api_key}_posthog`;
     const webPostHogPersistedString = await localStorage.getItem(POSTHOG_KEY);
     const webPostHogPersisted: {
       distinct_id: string;
@@ -37,9 +37,9 @@ register(async (extensionApi) => {
     return distinct_id;
   }
 
-  const posthog = new PostHog(ph_project_api_key, {
+  const posthog = new PostHog(posthog_api_key, {
     fetch: fetch,
-    host: true ? 'https://eu.i.posthog.com' : posthogHost,
+    host: posthog_api_host,
     persistence: 'memory',
     flushAt: 1,
     flushInterval: 0,
@@ -47,32 +47,25 @@ register(async (extensionApi) => {
       distinctId: await resolveDistinctId(),
       isIdentifiedId: false,
     },
+    
+
   });
 
-  /**
-   * calling identify on each web pixel load will dramatically increase billing
-   * we will suffice by adding $set property on each capture event where customer data exists
-   * 
-  if (init.data.customer && customerPrivacyStatus.analyticsProcessingAllowed == false) {
-    posthog.identify({
-      distinctId: await resolveDistinctId(),
-      properties: {
-        ...init.data.customer,
-      },
-    });
-  }
-  */
+
   type ValueOf<T> = T[keyof T];
-  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T) => void) {
+  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined) => void) {
     return (event: T) => {
       if (customerPrivacyStatus.analyticsProcessingAllowed == false) {
         return;
       }
-      // TODO: add check that event is enabled for collection by merchant
-      if (true || event.name) {
+      // if event is disabled by merchant skip
+      if (settings[event.name as keyof WebPixelSettings] === 'false') {
+        return;
       }
+      const uuid: string | undefined = event.id
+      const validateEventUUID: string | undefined = extractEventUUID(uuid)
 
-      fn(event);
+      fn(event, validateEventUUID);
     };
   }
 
@@ -101,23 +94,13 @@ register(async (extensionApi) => {
   for (const key of checkoutKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event) => {
+      preprocessEvent(async (event,uuid) => {
         const distinctId = await resolveDistinctId();
-        /**
-         * to reduce events used (billing) we will use $set on the capture() call
-        if (event.name == 'checkout_contact_info_submitted' && event.data.checkout.email) {
-          posthog.identify({
-            distinctId: distinctId,
-            properties: {
-              email: event.data.checkout.email,
-            },
-          });
-        }
-        */
-
+        
         posthog.capture({
+          ...(uuid ? {uuid: uuid} : {}),
           distinctId,
-          event: event.name,
+          event: event.name,  
           properties: {
             ...{
               ...initProperties,
@@ -144,13 +127,13 @@ register(async (extensionApi) => {
   for (const key of productCartKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event) => {
+      preprocessEvent(async (event, uuid) => {
         const distinctId = await resolveDistinctId();
         posthog.capture({
+          ...(uuid ? {uuid: uuid} : {}),
           distinctId,
           event: event.name,
           timestamp: new Date(event.timestamp),
-          uuid: event.id,
           properties: {
             ...initProperties,
             client_id: event.clientId,
@@ -175,15 +158,15 @@ register(async (extensionApi) => {
   for (const key of mouseEventsKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event) => {
+      preprocessEvent(async (event,uuid) => {
         // DOM events do not have window/document context
         // cannot set URL
         const distinctId = await resolveDistinctId();
         posthog.capture({
+          ...(uuid ? {uuid: uuid} : {}),
           distinctId,
           event: event.name,
           timestamp: new Date(event.timestamp),
-          uuid: event.id,
           properties: {
             ...initProperties,
             client_id: event.clientId,
@@ -196,13 +179,13 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'page_viewed',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...initProperties,
           client_id: event.clientId,
@@ -220,13 +203,13 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'collection_viewed',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...initProperties,
           client_id: event.clientId,
@@ -240,13 +223,13 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'product_viewed',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...initProperties,
           client_id: event.clientId,
@@ -260,13 +243,13 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'cart_viewed',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...{
             ...initProperties,
@@ -283,13 +266,13 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'search_submitted',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...initProperties,
           client_id: event.clientId,
@@ -303,25 +286,12 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'form_submitted',
-    preprocessEvent(async (event) => {
+    preprocessEvent(async (event,uuid) => {
       const distinctId = await resolveDistinctId();
       const emailRegex = /email/i;
       const [email] = event.data.element.elements
         .filter((item) => emailRegex.test(item.id || '') || emailRegex.test(item.name || ''))
         .map((item) => item.value);
-
-      /**
-       * to reduce events used (billing) we will use $set on the capture() call
-       * 
-      if (email) {
-        posthog.identify({
-          distinctId,
-          properties: {
-            email,
-          },
-        });
-      }
-      */
 
       const formBody = Object.fromEntries(
         event.data.element.elements
@@ -335,10 +305,10 @@ register(async (extensionApi) => {
           .filter((el): el is [string, string] => !!el)
       );
       posthog.capture({
+        ...(uuid ? {uuid: uuid} : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
-        uuid: event.id,
         properties: {
           ...initProperties,
           client_id: event.clientId,

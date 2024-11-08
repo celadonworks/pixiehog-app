@@ -13,7 +13,157 @@ sale_of_data = "disabled"
 [settings]
 type = "object"
 
-[settings.fields.ph_project_api_key]
+[settings.fields.posthog_api_key]
 name = "Posthog Project API Key"
-description = "ph_project_api_key"
+description = "posthog_api_key"
 type = "single_line_text_field"
+
+[settings.fields.posthog_api_host]
+name = "Posthog Project API Host"
+description = "posthog_api_host"
+type = "single_line_text_field"
+
+[settings.fields.cart_viewed]
+name = "Process cart_viewed Event"
+description = "Process the cart_viewed event - where a customer visited the cart page."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.checkout_address_info_submitted]
+name = "Process checkout_address_info_submitted"
+description = "Process the checkout_address_info_submitted event - where a customer submits their mailing address."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.checkout_completed]
+name = "Process checkout_completed"
+description = "Process the checkout_completed event - where a customer completes their checkout."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.checkout_contact_info_submitted]
+name = "Process checkout_contact_info_submitted"
+description = "Process the checkout_contact_info_submitted event - where a customer submits a checkout form."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.checkout_shipping_info_submitted]
+name = "Process checkout_shipping_info_submitted"
+description = "Process the checkout_shipping_info_submitted event - where a customer chooses a shipping rate."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.checkout_started]
+name = "Process checkout_started"
+description = "Process the checkout_started event - where a customer starts the checkout process."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.collection_viewed]
+name = "Process collection_viewed"
+description = "Process the collection_viewed event - where a customer visits a product collection index page."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.page_viewed]
+name = "Process page_viewed"
+description = "Process the page_viewed event - where a customer visits a page."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.payment_info_submitted]
+name = "Process payment_info_submitted"
+description = "Process the payment_info_submitted event - where a customer submits their payment info."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.product_added_to_cart]
+name = "Process product_added_to_cart"
+description = "Process the product_added_to_cart event - where a customer adds a product to their cart."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.product_removed_from_cart]
+name = "Process product_removed_from_cart"
+description = "Process the product_removed_from_cart event - where a customer removes a product to their cart."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.product_viewed]
+name = "Process product_viewed"
+description = "Process the product_viewed event - where a customer visits a product details page."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.search_submitted]
+name = "Process search_submitted"
+description = "Process the search_submitted event - where a customer performs a search on the storefront."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.clicked]
+name = "Process clicked"
+description = "Process the clicked event - where a customer clicks a page element."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.form_submitted]
+name = "Process form_submitted"
+description = "Process the form_submitted event - where a form on a page is submitted."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.input_blurred]
+name = "Process input_blurred"
+description = "Process the input_blurred event - where a element on the page loses focus."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.input_changed]
+name = "Process input_changed"
+description = "Process the input_changed event - where an input value changes."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
+[settings.fields.input_focused]
+name = "Process input_focused"
+description = "Process the input_focused event - where an on a page gains focus."
+type = "single_line_text_field"
+validations =  [
+  { name = "choices", value = "[\"true\", \"false\"]" }
+]
+
