@@ -48,7 +48,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
   const { js_web_posthog_feature_toggle, ...jsWebPosthogEventSettings } = dtoResult.data;
-  const responseMetafieldsSet = await metafieldsSet(admin.graphql, 
+  await metafieldsSet(admin.graphql, 
     [
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,

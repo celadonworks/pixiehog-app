@@ -51,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
  
-  const responseMetafieldsSet = await metafieldsSet(admin.graphql, 
+  await metafieldsSet(admin.graphql, 
     [
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
