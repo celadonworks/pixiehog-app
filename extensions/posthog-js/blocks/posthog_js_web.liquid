@@ -1,8 +1,39 @@
 <script>
     (() => {
-        if (posthog || window.posthog) {
-        throw Error('[ph-analytics]: Posthog has already been initialized')
-    }
+        if (typeof posthog !== 'undefined' || window.posthog) {
+            throw Error('[ph-analytics]: Posthog has already been initialized')
+        }
+
+        /**
+         * @type {string | ''}
+         */
+        const apiKey = "{{ app.metafields.ph_analytics.posthog_api_key }}";
+
+        if (!apiKey) {
+            throw Error('[ph-analytics]: Posthog apiKey is not set');
+        }
+
+        /**
+         * @type {string | ''}
+         */
+        const apiHost = `{{ app.metafields.ph_analytics.posthog_api_host }}`;
+
+        if (!apiHost) {
+            throw Error('[ph-analytics]: Posthog apiHost is not set')
+        }
+
+          /**
+         * @type {Record<string, any>}
+         */
+         const parsedConfig = JSON.parse(`{{ app.metafields.ph_analytics.js_web_posthog_config }}` || "{}") || {};
+
+        /**
+         * @type {Partial<PostHogJsWebConfig>}
+         */
+        const posthogConfig = {
+            api_host: apiHost,
+            ...parsedConfig,
+        };
 
         /* eslint-disable no-unused-expressions */
         !(function (t, e) {
@@ -49,11 +80,8 @@
             }),
             (e.__SV = 1));
         })(document, window.posthog || []);
-        const apiKey = "{{ api.metafields.ph_analytics.ph_key }}";
 
-        if (!apiKey) {
-            throw Error('[ph-analytics]: Posthog apiKey is not set');
-        }
+
         {% comment %}  
         /**
          * @typedef {Object} PostHogJsWebConfig
@@ -139,15 +167,10 @@
          * whether to wrap fetch and add tracing headers to the request
          */
         {% endcomment %}
-        /**
-         * @type {Partial<PostHogJsWebConfig>}
-         */
-        const posthogConfig = {
-            api_host: "https://eu.i.posthog.com",
-            person_profiles: "identified_only",
-        }
 
-        posthog.init(apiKey, posthogConfig);
+
+
+        window.posthog.init(apiKey, posthogConfig);
     })();
 </script>
 {% schema %}
@@ -157,7 +180,8 @@
     "settings": [
         {
             "type": "header",
-            "content" : "Adds [Posthog Javascript Web library](https://posthog.com/docs/libraries/js) to the online store. Note: the library will not be available in Checkout/Post-purchase/Thank you/Order status pages - use Web Pixel to track events in these pages"
+            "content": "Toggle",
+            "info" : "Adds [Posthog Javascript Web library](https://posthog.com/docs/libraries/js) to the online store. Note: the library will not be available in Checkout/Post-purchase/Thank you/Order status pages - use Web Pixel to track events in these pages"
         }
     ]
   }
