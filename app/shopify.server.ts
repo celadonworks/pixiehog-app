@@ -10,6 +10,9 @@ import prisma from "./db.server";
 import { metafieldsSet } from "./common.server/mutations/metafields-set";
 import { Constant } from "../common/constant";
 import { queryCurrentAppInstallation } from "./common.server/queries/current-app-installation";
+import { WebPixelEventsSettingsSchema } from "../common/dto/web-pixel-events-settings.dto";
+import { JsWebPosthogConfigSchema } from "../common/dto/js-web-settings.dto";
+
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
@@ -25,6 +28,8 @@ const shopify = shopifyApp({
     afterAuth: async ({ session, admin }) => {
       const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
       // initiate Web Pixel state
+      const defaultWebPixelSettings = WebPixelEventsSettingsSchema.parse({});
+      const defaultJSWebConfig = JsWebPosthogConfigSchema.parse({});
       await metafieldsSet(admin.graphql, [
         {
           key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
@@ -45,26 +50,14 @@ const shopify = shopifyApp({
           namespace: Constant.METAFIELD_NAMESPACE,
           ownerId: currentAppInstallation.id,
           type: 'json',
-          value: JSON.stringify({
-            cart_viewed: 'false',
-            checkout_address_info_submitted: 'false',
-            checkout_completed: 'true',
-            checkout_contact_info_submitted: 'true',
-            checkout_shipping_info_submitted: 'false',
-            checkout_started: 'true',
-            clicked: 'true',
-            collection_viewed: 'false',
-            form_submitted: 'true',
-            input_blurred: 'false',
-            input_changed: 'false',
-            input_focused: 'false',
-            page_viewed: 'true',
-            payment_info_submitted: 'true',
-            product_added_to_cart: 'true',
-            product_removed_from_cart: 'true',
-            product_viewed: 'false',
-            search_submitted: 'false'
-          })
+          value: JSON.stringify(defaultWebPixelSettings)
+        },
+        {
+          key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+          namespace: Constant.METAFIELD_NAMESPACE,
+          ownerId: currentAppInstallation.id,
+          type: 'json',
+          value: JSON.stringify(defaultJSWebConfig)
         }
       ])
     },
