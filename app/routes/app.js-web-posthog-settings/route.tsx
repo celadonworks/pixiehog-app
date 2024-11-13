@@ -242,7 +242,7 @@ export default function JsWebEvents() {
                     badgeToneOnDirty: 'attention',
                     bannerMessage: (
                       <div>
-                        Enabled Posthog JS web app embed. <Link target='_blank'  url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. Make sure to save changes
+                        Toggle Posthog JS web app embed on. <Link target='_blank'  url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. ensure changes are saved.
                       </div>
                     ),
                   },
