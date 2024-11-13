@@ -5,7 +5,7 @@ export const WebPixelEventsSettingsSchema = z.object({
   .describe(
     `event logs an instance where a customer visited the cart page.`
   )
-  .default(false),
+  .default(true),
 
   checkout_address_info_submitted: z.boolean()
   .describe(
@@ -17,13 +17,13 @@ export const WebPixelEventsSettingsSchema = z.object({
   .describe(
     `event logs when a visitor completes a purchase. It's triggered once for each checkout, typically on the Thank you page. However, for upsells and post purchases, the 'checkout_completed' event is triggered on the first upsell offer page instead. The event isn't triggered again on the Thank you page. If the page where the event is supposed to be triggered fails to load, then the 'checkout_completed' event isn't triggered at all.`
   )
-  .default(false),
+  .default(true),
 
   checkout_contact_info_submitted: z.boolean()
     .describe(
       `event logs an instance where a customer submits a checkout form. This event is only available in checkouts where Checkout Extensibility for customizations is enabled`
     )
-    .default(false),
+    .default(true),
 
   checkout_shipping_info_submitted: z.boolean()
     .describe(
@@ -35,7 +35,7 @@ export const WebPixelEventsSettingsSchema = z.object({
     .describe(
       `event logs an instance of a customer starting the checkout process. This event is available on the checkout page. For Checkout Extensibility, this event is triggered every time a customer enters checkout. For non-checkout extensible shops, this event is only triggered the first time a customer enters checkout.`
     )
-    .default(false),
+    .default(true),
 
   collection_viewed: z.boolean()
     .describe(
@@ -47,7 +47,7 @@ export const WebPixelEventsSettingsSchema = z.object({
     .describe(
       `event logs an instance where a customer visited a page. This event is available on the online store, checkout, and Order status pages.`
     )
-    .default(false),
+    .default(true),
 
   payment_info_submitted: z.boolean()
     .describe(
@@ -59,13 +59,13 @@ export const WebPixelEventsSettingsSchema = z.object({
     .describe(
       `event logs an instance where a customer adds a product to their cart. This event is available on the online store page.`
     )
-    .default(false),
+    .default(true),
 
   product_removed_from_cart: z.boolean()
     .describe(
       `event logs an instance where a customer removes a product from their cart. This event is available on the online store page.`
     )
-    .default(false),
+    .default(true),
 
   product_viewed: z.boolean()
     .describe(
