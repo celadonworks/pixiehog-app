@@ -1,17 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import {
-  Page,
-  Layout,
-  Card,
-  BlockStack,
-  Tabs,
-  Divider,
-  TextField,
-  Icon,
-  Box,
-  Link,
-} from '@shopify/polaris';
+import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
 import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -26,14 +15,27 @@ import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggle.dto';
 import FeatureStatusManager from '../../../common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
+import { appEmbedStatus } from '../../common.server/procedures/app-embed-status';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session: { shop } } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
-  return currentAppInstallation;
+  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
+    admin.graphql,
+    Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID
+  );
+
+  const payload = {
+    currentAppInstallation: currentAppInstallation,
+    js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
+    js_web_posthog_app_embed_uuid: Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    shop,
+    js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
+  }
+  return payload;
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const payload = await request.json()
+  const payload = await request.json();
   const dtoResult = JsWebPosthogConfigSchema.merge(JsWebPosthogFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
@@ -43,13 +45,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       .join(', ');
     return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
   }
-  
+
   const { admin } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
   const { js_web_posthog_feature_toggle, ...jsWebPosthogEventSettings } = dtoResult.data;
-  await metafieldsSet(admin.graphql, 
-    [
+  await metafieldsSet(admin.graphql, [
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
@@ -73,22 +74,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function JsWebEvents() {
   const fetcher = useFetcher();
-  const currentAppInstallation = useLoaderData<typeof loader>();
+  const {
+    currentAppInstallation,
+    js_web_posthog_app_embed_status: jsWebPosthogAppEmbedStatus,
+    js_web_posthog_app_embed_uuid: jsWebPosthogAppEmbedUuid,
+    js_web_posthog_app_embed_handle: jsWebPosthogAppEmbedHandle,
+    shop,
+  } = useLoaderData<typeof loader>();
   const jsWebPosthogSettingsMetafieldValue = currentAppInstallation?.js_web_posthog_config?.jsonValue as
     | undefined
     | null
     | JsWebPosthogConfig;
-    
+
   const jsWebPosthogSettingsInitialState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
-    if(jsWebPosthogSettingsMetafieldValue?.[entry.key]){
+    if (jsWebPosthogSettingsMetafieldValue?.[entry.key]) {
       return {
         ...entry,
         value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
-      } as JsWebPosthogSettingChoice
+      } as JsWebPosthogSettingChoice;
     }
 
-    return entry
- 
+    return entry;
   });
 
   const [jsWebPosthogSettings, setJsWebPosthogSettings] = useState(jsWebPosthogSettingsInitialState);
@@ -99,20 +105,20 @@ export default function JsWebEvents() {
         if (entry.key != key) {
           return entry;
         }
-        if(entry.type === "Checkbox"){
+        if (entry.type === 'Checkbox') {
           return {
             ...entry,
             value: !entry.value,
-          }
+          };
         }
         return {
           ...entry,
           value: value,
-        } as JsWebPosthogSettingChoice
+        } as JsWebPosthogSettingChoice;
       })
     );
   };
-  const selectedJsWebPosthogSettings = jsWebPosthogSettings.filter((entry) => entry.type === "Checkbox" && entry.value);
+  const selectedJsWebPosthogSettings = jsWebPosthogSettings.filter((entry) => entry.type === 'Checkbox' && entry.value);
 
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = useCallback((selectedTabIndex: number) => setSelectedTab(selectedTabIndex), []);
@@ -158,7 +164,7 @@ export default function JsWebEvents() {
         isError: true,
         duration: 2000,
       });
-      return
+      return;
     }
 
     window.shopify.toast.show(data.message, {
@@ -168,12 +174,13 @@ export default function JsWebEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
-  
-  const jsWebPosthogFeatureEnabledInitialState = currentAppInstallation.js_web_posthog_feature_toggle?.jsonValue == true
-  const [jsWebPosthogFeatureEnabled, setjsWebPosthogFeatureEnabled] = useState(
-    jsWebPosthogFeatureEnabledInitialState
+  const jsWebPosthogFeatureEnabledInitialState =
+    currentAppInstallation.js_web_posthog_feature_toggle?.jsonValue == true;
+  const [jsWebPosthogFeatureEnabled, setjsWebPosthogFeatureEnabled] = useState(jsWebPosthogFeatureEnabledInitialState);
+  const handleJsWebPosthogFeatureEnabledToggle = useCallback(
+    () => setjsWebPosthogFeatureEnabled((value) => !value),
+    []
   );
-  const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
 
   const submitSettings = () => {
     fetcher.submit(
@@ -187,14 +194,15 @@ export default function JsWebEvents() {
       },
       {
         method: 'POST',
-        encType: "application/json"
+        encType: 'application/json',
       }
     );
   };
 
-  
-  const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings)  
-  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState;
+  const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings);
+  const dirty =
+    Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) ||
+    jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState;
   return (
     <Page
       title="JS Web Config"
@@ -212,21 +220,41 @@ export default function JsWebEvents() {
               <FeatureStatusManager
                 featureEnabled={jsWebPosthogFeatureEnabled}
                 handleFeatureEnabledToggle={handleJsWebPosthogFeatureEnabledToggle}
-                dirty= {dirty}
-                bannerTitle='The following requirements need to be meet to finalize the Javascript Web setup:'
-                bannerTone='warning'
+                dirty={dirty}
+                bannerTitle="The following requirements need to be meet to finalize the Javascript Web setup:"
+                bannerTone="warning"
                 customActions={[
                   {
-                    trigger : !currentAppInstallation.posthog_api_key?.value,
-                    badgeText:"Action required",
-                    badgeTone: "attention",
-                    badgeToneOnDirty: "critical",
-                    bannerMessage: <div>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</div>
+                    trigger: !currentAppInstallation.posthog_api_key?.value,
+                    badgeText: 'Action required',
+                    badgeTone: 'attention',
+                    badgeToneOnDirty: 'critical',
+                    bannerMessage: (
+                      <div>
+                        Setup Posthog project API key <Link url="/app/overview">Here</Link>.
+                      </div>
+                    ),
+                  },
+                  {
+                    trigger: !jsWebPosthogAppEmbedStatus,
+                    badgeText: 'Action required',
+                    badgeTone: 'attention',
+                    badgeToneOnDirty: 'critical',
+                    bannerMessage: (
+                      <div>
+                        Enabled Posthog JS web app embed. <Link target='_blank'  url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. Make sure to save changes
+                      </div>
+                    ),
                   },
                 ]}
               />
               <Divider />
-              <Tabs disabled={!jsWebPosthogFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
+              <Tabs
+                disabled={!jsWebPosthogFeatureEnabled}
+                tabs={tabs}
+                selected={selectedTab}
+                onSelect={handleTabChange}
+              >
                 <BlockStack gap="500">
                   <TextField
                     label=""
@@ -241,7 +269,6 @@ export default function JsWebEvents() {
                     settings={tabs[selectedTab].id === 'all' ? jsWebPosthogSettings : selectedJsWebPosthogSettings}
                     onChange={handleJsWebPosthogSettingChange}
                     featureEnabled={jsWebPosthogFeatureEnabled}
-                    
                   ></MultiChoiceSelector>
                 </BlockStack>
               </Tabs>
