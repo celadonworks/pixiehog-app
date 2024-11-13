@@ -1,12 +1,12 @@
 import type { AdminGraphqlClient } from '@shopify/shopify-app-remix/server';
-import { ThemeRole } from '../../types/admin.types';
+import type { ThemeRole } from '../../types/admin.types';
 import { queryThemes } from '../queries/query-themes';
 
 export async function appEmbedStatus(graphq: AdminGraphqlClient, appEmbedUuid: string) {
   const themes = await queryThemes(graphq, {
     files: ['config/settings_data.json'],
     first: 1,
-    roles: [ThemeRole.Main],
+    roles: ['MAIN' as ThemeRole],
   });
 
   if (!themes) {
@@ -28,9 +28,9 @@ export async function appEmbedStatus(graphq: AdminGraphqlClient, appEmbedUuid: s
     return false;
   }
 
-  const parsed = JSON.parse(settingsData) as { blocks: Record<string, { type: string; disabled?: boolean }> };
+  const parsed = JSON.parse(settingsData) as { current: {blocks: Record<string, { type: string; disabled?: boolean }>} };
 
-  return Object.values(parsed.blocks).some((payload) => {
+  return Object.values(parsed.current.blocks).some((payload) => {
     return payload.type.includes(appEmbedUuid) && !payload.disabled
   })
 }
