@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, BlockStack, Card, TextField, Button,Text, Link, Select, Box } from '@shopify/polaris';
+import { Page, Layout, BlockStack, Card, TextField,Text, Link, Select, Box } from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -20,6 +20,7 @@ import type { WebPixelSettingChoice } from './app.web-pixel-settings/interface/s
 import { defaultWebPixelSettings } from './app.web-pixel-settings/default-web-pixel-settings';
 import type { PosthogApiHost} from 'common/dto/posthog-api-host.dto';
 import { PosthogApiHostSchema } from 'common/dto/posthog-api-host.dto';
+import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
 
 const apiHostOptions = [
   { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
@@ -28,10 +29,22 @@ const apiHostOptions = [
 ]
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session: { shop } } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
-  return currentAppInstallation;
+  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
+    admin.graphql,
+    Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID
+  );
+
+  const payload = {
+    currentAppInstallation: currentAppInstallation,
+    js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
+    js_web_posthog_app_embed_uuid: Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    shop,
+    js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
+  }
+  return payload;
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -133,11 +146,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 };
 
 export default function Index() {
-  const currentAppInstallation = useLoaderData<typeof loader>();
+  const {
+    currentAppInstallation,
+    js_web_posthog_app_embed_status: jsWebPosthogAppEmbedStatus,
+    js_web_posthog_app_embed_uuid: jsWebPosthogAppEmbedUuid,
+    js_web_posthog_app_embed_handle: jsWebPosthogAppEmbedHandle,
+    shop,
+  } = useLoaderData<typeof loader>();
 
   const fetcher = useFetcher();
   const navigate = useNavigate();
-  let PosthogApiKeyInitialState = currentAppInstallation.posthog_api_key?.value || '';
+  const PosthogApiKeyInitialState = currentAppInstallation.posthog_api_key?.value || '';
   const [PostHogApiKey, setPostHogApiKey] = useState(PosthogApiKeyInitialState);
   const handleApiKeyChange = useCallback((newValue: string) => setPostHogApiKey(newValue), []);
 
@@ -233,16 +252,6 @@ export default function Index() {
         loading: fetcher.state == 'loading',
         disabled: fetcher.state != 'idle' || !dirty,
         }}
-        secondaryActions={
-          dirty && (
-            <Button onClick={() => {
-              setPostHogApiKey(PosthogApiKeyInitialState)
-              setPosthogApiHost(PosthogApiHostInitialState == '' ? 'https://us.i.posthog.com' : PosthogApiHostInitialState)
-              setWebPixelFeatureEnabled(webPixelFeatureToggleInitialState)
-              setjsWebPosthogFeatureEnabled(jsWebPosthogFeatureEnabledInitialState)
-            }}>Cancel</Button>
-          )
-        }
       >
         <BlockStack gap="500">
           <Layout>
@@ -300,12 +309,12 @@ export default function Index() {
                       <FeatureStatusManager
                         featureEnabled={webPixelFeatureEnabled}
                         handleFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
-                        dirty= {false}
+                        dirty= {webPixelFeatureToggleInitialState != webPixelFeatureEnabled || !!PostHogApiKey != !!PosthogApiKeyInitialState}
                         bannerTitle='The following requirements need to be meet to finalize the Web Pixel setup:'
                         bannerTone='warning'
                         customActions={[
                           {
-                            trigger : !currentAppInstallation.posthog_api_key?.value,
+                            trigger : !PostHogApiKey,
                             badgeText:"Action required",
                             badgeTone: "critical",
                             badgeToneOnDirty: "attention",
@@ -332,16 +341,27 @@ export default function Index() {
                       <FeatureStatusManager
                         featureEnabled={jsWebPosthogFeatureEnabled}
                         handleFeatureEnabledToggle={handleJsWebPosthogFeatureEnabledToggle}
-                        dirty= {false}
+                        dirty= {jsWebPosthogFeatureEnabledInitialState != jsWebPosthogFeatureEnabled || !!PostHogApiKey != !!PosthogApiKeyInitialState}
                         bannerTitle='The following requirements need to be meet to finalize the Javascript Web setup:'
                         bannerTone='warning'
                         customActions={[
                           {
-                            trigger : !currentAppInstallation.posthog_api_key?.value,
+                            trigger : !PostHogApiKey,
                             badgeText:"Action required",
                             badgeTone: "critical",
                             badgeToneOnDirty: "attention",
                             bannerMessage: "Setup Posthog project API key."
+                          },
+                          {
+                            trigger: !jsWebPosthogAppEmbedStatus,
+                            badgeText: 'Action required',
+                            badgeTone: 'critical',
+                            badgeToneOnDirty: 'attention',
+                            bannerMessage: (
+                              <div>
+                                Toggle Posthog JS web app embed on. <Link url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. ensure changes are saved.
+                              </div>
+                            ),
                           },
                         ]}
                       />
