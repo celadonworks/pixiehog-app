@@ -248,7 +248,7 @@ export default function WebPixelEvents() {
                   <TextField
                     label=""
                     value={filter}
-                    placeholder="Filter Events"
+                    placeholder="Filter events"
                     onChange={handleFilterChange}
                     autoComplete="off"
                     disabled={!webPixelFeatureEnabled}

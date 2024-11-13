@@ -259,7 +259,7 @@ export default function JsWebEvents() {
                   <TextField
                     label=""
                     value={filter}
-                    placeholder="Filter Events"
+                    placeholder="Filter properties"
                     onChange={handleFilterChange}
                     autoComplete="off"
                     disabled={!jsWebPosthogFeatureEnabled}
