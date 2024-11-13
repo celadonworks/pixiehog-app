@@ -91,6 +91,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                   </InlineGrid>
                 );
               })}
+              <Box paddingBlockEnd={'025'}></Box>
           </BlockStack>
         </Scrollable>
       ) : (
