@@ -229,15 +229,15 @@ export default function WebPixelEvents() {
                   {
                     trigger : !currentAppInstallation.posthog_api_key?.value,
                     badgeText:"Action required",
-                    badgeTone: "attention",
-                    badgeToneOnDirty: "critical",
+                    badgeTone: "critical",
+                    badgeToneOnDirty: "attention",
                     bannerMessage: <div>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</div>
                   },
                   {
                     trigger : allEventsDisabled,
                     badgeText:"Action required",
-                    badgeTone: "attention",
-                    badgeToneOnDirty: "critical",
+                    badgeTone: "critical",
+                    badgeToneOnDirty: "attention",
                     bannerMessage: "Select at least 1 event from the list below."
                   }
               ]}

@@ -227,8 +227,8 @@ export default function JsWebEvents() {
                   {
                     trigger: !currentAppInstallation.posthog_api_key?.value,
                     badgeText: 'Action required',
-                    badgeTone: 'attention',
-                    badgeToneOnDirty: 'critical',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
                     bannerMessage: (
                       <div>
                         Setup Posthog project API key <Link url="/app/overview">Here</Link>.
@@ -238,8 +238,8 @@ export default function JsWebEvents() {
                   {
                     trigger: !jsWebPosthogAppEmbedStatus,
                     badgeText: 'Action required',
-                    badgeTone: 'attention',
-                    badgeToneOnDirty: 'critical',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
                     bannerMessage: (
                       <div>
                         Enabled Posthog JS web app embed. <Link target='_blank'  url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. Make sure to save changes

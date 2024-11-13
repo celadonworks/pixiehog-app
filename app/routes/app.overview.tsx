@@ -307,15 +307,15 @@ export default function Index() {
                           {
                             trigger : !currentAppInstallation.posthog_api_key?.value,
                             badgeText:"Action required",
-                            badgeTone: "attention",
-                            badgeToneOnDirty: "critical",
+                            badgeTone: "critical",
+                            badgeToneOnDirty: "attention",
                             bannerMessage: "Setup Posthog project API key."
                           },
                           {
                             trigger : allEventsDisabled,
                             badgeText:"Action required",
-                            badgeTone: "attention",
-                            badgeToneOnDirty: "critical",
+                            badgeTone: "critical",
+                            badgeToneOnDirty: "attention",
                             bannerMessage: <div>Select at least 1 event from the list below. <Link url="/app/web-pixel-settings"> Here </Link></div>
                           }
                       ]}
@@ -339,8 +339,8 @@ export default function Index() {
                           {
                             trigger : !currentAppInstallation.posthog_api_key?.value,
                             badgeText:"Action required",
-                            badgeTone: "attention",
-                            badgeToneOnDirty: "critical",
+                            badgeTone: "critical",
+                            badgeToneOnDirty: "attention",
                             bannerMessage: "Setup Posthog project API key."
                           },
                         ]}
