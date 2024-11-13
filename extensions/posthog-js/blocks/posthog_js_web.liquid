@@ -7,7 +7,7 @@
         /**
          * @type {string | ''}
          */
-        const apiKey = "{{ app.metafields.ph_analytics.posthog_api_key }}";
+        const apiKey = "{{ app.metafields.hogify.posthog_api_key }}";
 
         if (!apiKey) {
             throw Error('[ph-analytics]: Posthog apiKey is not set');
@@ -16,7 +16,7 @@
         /**
          * @type {string | ''}
          */
-        const apiHost = `{{ app.metafields.ph_analytics.posthog_api_host }}`;
+        const apiHost = `{{ app.metafields.hogify.posthog_api_host }}`;
 
         if (!apiHost) {
             throw Error('[ph-analytics]: Posthog apiHost is not set')
@@ -25,7 +25,7 @@
           /**
          * @type {Record<string, any>}
          */
-         const parsedConfig = JSON.parse(`{{ app.metafields.ph_analytics.js_web_posthog_config }}` || "{}") || {};
+         const parsedConfig = JSON.parse(`{{ app.metafields.hogify.js_web_posthog_config }}` || "{}") || {};
 
         /**
          * @type {Partial<PostHogJsWebConfig>}

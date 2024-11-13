@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "dccee050afcd89238a3d924aa7608d5c"
-name = "Posthog Analytics"
-handle = "posthog-analytics"
+name = "Hogify"
+handle = "hogify"
 application_url = "https://net-observation-taxation-interactive.trycloudflare.com"
 embedded = true
 
@@ -31,7 +31,7 @@ api_version = "2024-10"
 
 [app_proxy]
 url = "https://net-observation-taxation-interactive.trycloudflare.com"
-subpath = "ph-analytics"
+subpath = "hogify"
 prefix = "tools"
 
 [pos]
