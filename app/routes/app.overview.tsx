@@ -82,14 +82,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: currentAppInstallation.id,
-      type: 'json',
+      type: 'boolean',
       value: dtoResultJsWebPosthogFeatureToggle.data.js_web_posthog_feature_toggle.toString(),
     },
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: currentAppInstallation.id,
-      type: 'json',
+      type: 'boolean',
       value: dtoResultWebPixelFeatureToggle.data.web_pixel_feature_toggle.toString(),
     }
   ]

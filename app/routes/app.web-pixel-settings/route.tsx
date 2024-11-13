@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: currentAppInstallation.id,
-      type: 'json',
+      type: 'boolean',
       value: web_pixel_feature_toggle.toString(),
     },
     {
@@ -79,6 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
   const currentAppInstallation = useLoaderData<typeof loader>();
+  console.log({currentAppInstallation})
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
