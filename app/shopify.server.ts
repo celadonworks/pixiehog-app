@@ -12,13 +12,13 @@ import { Constant } from "../common/constant";
 import { queryCurrentAppInstallation } from "./common.server/queries/current-app-installation";
 import { WebPixelEventsSettingsSchema } from "../common/dto/web-pixel-events-settings.dto";
 import { JsWebPosthogConfigSchema } from "../common/dto/js-web-settings.dto";
-
+import { APP_ENV } from "../common/secret";
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiKey: APP_ENV.SHOPIFY_API_KEY,
+  apiSecretKey: APP_ENV.SHOPIFY_API_SECRET || "",
   apiVersion: ApiVersion.October24,
   scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
+  appUrl: APP_ENV.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
