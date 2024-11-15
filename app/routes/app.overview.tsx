@@ -139,9 +139,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const responseRecalculate = await recalculateWebPixel(admin.graphql);
   const message = (() => {
     if (!responseRecalculate?.status) {
-      return 'key saved successfully.';
+      return 'saved successfully.';
     }
-    return `key saved & web pixel ${responseRecalculate.status}.`;
+    return `saved & web pixel ${responseRecalculate.status}.`;
   })();
   return json({ ok: true, message: message }, { status: 200 });
 };
