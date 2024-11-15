@@ -3,12 +3,10 @@
 client_id = "dccee050afcd89238a3d924aa7608d5c"
 name = "Pxhog"
 handle = "pxhog"
-application_url = "https://net-observation-taxation-interactive.trycloudflare.com"
+application_url = "https://app.pxhog.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
-dev_store_url = "celadonworksdev.myshopify.com"
 include_config_on_deploy = true
 
 [access.admin]
@@ -21,16 +19,16 @@ scopes = "read_customer_events,read_themes,write_pixels"
 
 [auth]
 redirect_urls = [
-  "https://net-observation-taxation-interactive.trycloudflare.com/auth/callback",
-  "https://net-observation-taxation-interactive.trycloudflare.com/auth/shopify/callback",
-  "https://net-observation-taxation-interactive.trycloudflare.com/api/auth/callback"
+  "https://app.pxhog.com/auth/callback",
+  "https://app.pxhog.com/auth/shopify/callback",
+  "https://app.pxhog.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://net-observation-taxation-interactive.trycloudflare.com"
+url = "https://app.pxhog.com"
 subpath = "pxhog"
 prefix = "tools"
 

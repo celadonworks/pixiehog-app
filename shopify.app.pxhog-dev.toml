@@ -1,0 +1,34 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "0f1bffe9ed74227f1e5eb6298ce5fdbc"
+name = "Pxhog - Dev"
+handle = "pxhog-dev"
+
+application_url = "https://net-observation-taxation-interactive.trycloudflare.com"
+embedded = true
+
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customer_events,read_themes,write_pixels"
+
+[auth]
+redirect_urls = [
+  "https://net-observation-taxation-interactive.trycloudflare.com/auth/callback",
+  "https://net-observation-taxation-interactive.trycloudflare.com/auth/shopify/callback",
+  "https://net-observation-taxation-interactive.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+[app_proxy]
+url = "https://net-observation-taxation-interactive.trycloudflare.com"
+subpath = "pxhog"
+prefix = "tools"
+
+[pos]
+embedded = false
