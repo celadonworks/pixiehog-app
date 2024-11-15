@@ -79,7 +79,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
   const currentAppInstallation = useLoaderData<typeof loader>();
-  console.log({currentAppInstallation})
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
@@ -102,7 +101,6 @@ export default function WebPixelEvents() {
   const handleWebPixelSettingChange = (key: string,value?: string | number | string[]) => {
     setWebPixelSettings(
       webPixelSettings.map<WebPixelSettingChoice>((entry) => {
-        console.log({ clickedKey: key, elementKey: entry.key });
         if (entry.key != key) {
           return entry;
         }
@@ -161,8 +159,7 @@ export default function WebPixelEvents() {
     if (!data) {
       return;
     }
-    console.log('data.ok');
-    console.log(data);
+
 
     if (!data.ok) {
       window.shopify.toast.show(data.message, {

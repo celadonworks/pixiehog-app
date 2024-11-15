@@ -6,15 +6,12 @@ class EventUUIDValidationError extends Error {
 }
 
 function isValidUUID(uuid: string | undefined): uuid is string {
-  console.log("isValidate", uuid);
   
   const uuidRegex = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
-  console.log("isValidate--", typeof uuid === 'string' && uuidRegex.test(uuid));
   return typeof uuid === 'string' && uuidRegex.test(uuid);
 }
 
 function validateEventUUID(uuid: string){
-  console.log("uuid validate",uuid);
   
   if(!isValidUUID(uuid)){
     throw new EventUUIDValidationError(`Invalid event UUID: ${uuid}`);
@@ -35,7 +32,6 @@ export function extractEventUUID(eventId: string | undefined){
     }
   }
   const newUuid = eventId.substring(eventId.indexOf('-') + 1 ) as string;
-  console.log("newUuid",newUuid);
   
   try {
     if (validateEventUUID(newUuid)) {

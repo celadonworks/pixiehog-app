@@ -5,8 +5,7 @@ import { WebPixelEventsSettingsSchema } from 'common/dto/web-pixel-events-settin
 export const defaultWebPixelSettings: WebPixelSettingChoice[] = Object.entries(WebPixelEventsSettingsSchema.shape).map<WebPixelSettingChoice>(([key,item]) =>{
   let testingItem = item
   const defaultValue = testingItem._def.defaultValue()
-  console.log("defaultValue");
-  console.log(defaultValue);
+
   
   while( testingItem.isOptional() || testingItem.isNullable()){
     testingItem = testingItem._def.innerType
@@ -19,8 +18,7 @@ export const defaultWebPixelSettings: WebPixelSettingChoice[] = Object.entries(W
     ZodArray: "List"
   }
   
-  console.log("defaultValue----");
-  console.log(defaultValue);
+
   
   if(testingItem._def.typeName == "ZodEnum"){
     return {
