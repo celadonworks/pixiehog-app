@@ -22,9 +22,9 @@ export default function App() {
   return (
     <div className={styles.index}>
       <div className={styles.content}>
-        <h1 className={styles.heading}>A short heading about [your app]</h1>
+        <h1 className={styles.heading}>Pxhog</h1>
         <p className={styles.text}>
-          A tagline about [your app] that describes your value proposition.
+          Connector to send events from Shopify to Posthog
         </p>
         {showForm && (
           <Form className={styles.form} method="post" action="/auth/login">
@@ -40,16 +40,10 @@ export default function App() {
         )}
         <ul className={styles.list}>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Web Pixel</strong>. Use shopify latest Web Pixel features to collect events from your storefront
           </li>
           <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
-          </li>
-          <li>
-            <strong>Product feature</strong>. Some detail about your feature and
-            its benefit to your customer.
+            <strong>Posthog SDK GUI</strong>. Graphical User Interface to configure Posthog for your store.
           </li>
         </ul>
       </div>
