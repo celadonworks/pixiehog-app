@@ -21,6 +21,7 @@ import { defaultWebPixelSettings } from './app.web-pixel-settings/default-web-pi
 import type { PosthogApiHost} from 'common/dto/posthog-api-host.dto';
 import { PosthogApiHostSchema } from 'common/dto/posthog-api-host.dto';
 import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
+import { APP_ENV } from '../../common/secret';
 
 const apiHostOptions = [
   { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
@@ -34,13 +35,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
     admin.graphql,
-    Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID
+    APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID
   );
 
   const payload = {
     currentAppInstallation: currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
-    js_web_posthog_app_embed_uuid: Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    js_web_posthog_app_embed_uuid: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
     shop,
     js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
   }
@@ -359,7 +360,7 @@ export default function Index() {
                             badgeToneOnDirty: 'attention',
                             bannerMessage: (
                               <div>
-                                Toggle Posthog JS web app embed on. <Link url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. ensure changes are saved.
+                                Toggle Posthog JS web app embed on. <Link target='_top' url={`https://${shop}/admin/themes/current/editor?context=apps&activateAppId=${jsWebPosthogAppEmbedUuid}/${jsWebPosthogAppEmbedHandle}`}>Click Here</Link>. ensure changes are saved.
                               </div>
                             ),
                           },

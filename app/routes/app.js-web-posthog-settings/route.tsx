@@ -16,18 +16,19 @@ import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggl
 import FeatureStatusManager from '../../../common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
 import { appEmbedStatus } from '../../common.server/procedures/app-embed-status';
+import { APP_ENV } from '../../../common/secret';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session: { shop } } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
   const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
     admin.graphql,
-    Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID
+    APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID
   );
 
   const payload = {
     currentAppInstallation: currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
-    js_web_posthog_app_embed_uuid: Constant.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    js_web_posthog_app_embed_uuid: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
     shop,
     js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
   }
