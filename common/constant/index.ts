@@ -1,5 +1,5 @@
 export class Constant {
-  static readonly METAFIELD_NAMESPACE = "hogify";
+  static readonly METAFIELD_NAMESPACE = "pxhog";
   static readonly METAFIELD_KEY_POSTHOG_API_KEY = "posthog_api_key";
   static readonly METAFIELD_KEY_POSTHOG_API_HOST = "posthog_api_host"
   static readonly METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE = "web_pixel_feature_toggle";
