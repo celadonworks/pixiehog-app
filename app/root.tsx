@@ -4,9 +4,20 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  json,
+  useLoaderData,
 } from "@remix-run/react";
 
+export async function loader() {
+  return json({
+    ENV: {
+      POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+    },
+  });
+}
+
 export default function App() {
+  const data = useLoaderData<typeof loader>();
   return (
     <html>
       <head>
@@ -21,6 +32,13 @@ export default function App() {
         <Links />
       </head>
       <body>
+      <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(
+              data.ENV
+            )}`,
+          }}
+        />
         <Outlet />
         <ScrollRestoration />
         <Scripts />
