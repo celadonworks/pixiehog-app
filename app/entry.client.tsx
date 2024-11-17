@@ -15,6 +15,7 @@ function PosthogInit() {
       person_profiles: 'always',
       capture_pageleave: false,
       enable_recording_console_log: true,
+      persistence: 'cookie',
     });
     posthog.identify(
       posthog.get_distinct_id(),  // Replace 'distinct_id' with your user's unique identifier
