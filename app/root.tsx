@@ -12,6 +12,7 @@ export async function loader() {
   return json({
     ENV: {
       POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+      POSTOHG_API_HOST: process.env.POSTOHG_API_HOST,
     },
   });
 }

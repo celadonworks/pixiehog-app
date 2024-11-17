@@ -6,10 +6,12 @@ import { hydrateRoot } from 'react-dom/client';
 function PosthogInit() {
   const shopify = useAppBridge();
   useEffect(() => {
-    
-    
-    posthog.init((window as any).ENV.POSTHOG_API_KEY, {
-      api_host: 'https://pxhog.com/ingest',
+    if (!window.ENV.POSTHOG_API_KEY) {
+      console.log('posthog disabled - no api key')
+      return;
+    }
+    posthog.init(window.ENV.POSTHOG_API_KEY, {
+      api_host: window.ENV.POSTOHG_API_HOST,
       person_profiles: 'always',
       capture_pageleave: false,
       enable_recording_console_log: true,
