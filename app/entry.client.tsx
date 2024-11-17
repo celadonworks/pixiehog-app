@@ -15,10 +15,8 @@ function PosthogInit() {
       person_profiles: 'always',
       capture_pageleave: false,
       enable_recording_console_log: true,
-      bootstrap: {
-        distinctID: shopify.config.shop
-      }
     });
+    posthog.identify(shopify.config.shop);
   }, []);
 
   return null;
