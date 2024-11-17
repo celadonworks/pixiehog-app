@@ -16,7 +16,10 @@ function PosthogInit() {
       capture_pageleave: false,
       enable_recording_console_log: true,
     });
-    posthog.identify(shopify.config.shop);
+    posthog.identify(
+      posthog.get_distinct_id(),  // Replace 'distinct_id' with your user's unique identifier
+      { shop: shopify.config.shop, } // optional: set additional person properties
+    );
   }, []);
 
   return null;
