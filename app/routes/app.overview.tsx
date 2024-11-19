@@ -26,7 +26,7 @@ import { APP_ENV } from '../../common/secret';
 const apiHostOptions = [
   { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
   { label: "https://eu.i.posthog.com", value:"https://eu.i.posthog.com"},
-  { label: "Custom API Host", value:"custom"}
+  { label: "Custom Reverse Proxy", value:"Custom Reverse Proxy"}
 ]
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -285,11 +285,11 @@ export default function Index() {
                     options={apiHostOptions}
                     onChange={handlePosthogApiHostChange}
                     value={posthogApiHost}
-                    helpText= "We recommend using a custom API host for optimal data handling and compliance."
+                    helpText= "We recommend using a custom Reverse Proxy for optimal data handling and compliance."
                   />
                   {posthogApiHost == "custom" && (
                     <TextField
-                    label="Custom API Host"
+                    label="Custom Reverse Proxy"
                     labelAction= {{content: 'What is this , and how do I configure it ?', url:'https://google.com', target:'_blank'}}
                     inputMode='url'
                     type='url'
