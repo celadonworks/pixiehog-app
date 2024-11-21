@@ -22,6 +22,7 @@ import type { PosthogApiHost} from 'common/dto/posthog-api-host.dto';
 import { PosthogApiHostSchema } from 'common/dto/posthog-api-host.dto';
 import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
 import { APP_ENV } from '../../common/secret';
+import { urlWithShopParam } from '../../common/utils';
 
 const apiHostOptions = [
   { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
@@ -271,7 +272,7 @@ export default function Index() {
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
                     <TextField
                       label="PostHog Project API Key"
-                      labelAction= {{content: 'Where is my API key ?', url:'https://google.com', target:'_blank'}}
+                      labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/introduction`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
                       onChange={handleApiKeyChange}
