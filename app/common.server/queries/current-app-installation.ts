@@ -28,11 +28,15 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         $webPixelFeatureToggle: String!
         $jsWebPosthogConfig: String!
         $jsWebPosthogFeatureToggle: String!
+        $dataCollectionStrategyKey: String!
       ) {
         currentAppInstallation {
           id
+          
           app {
             id
+            title
+            handle
           }
           posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {
             key
@@ -40,6 +44,11 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
             type
           }
           posthog_api_host: metafield(namespace: $namespace, key: $posthogApiHostKey) {
+            key
+            value
+            type
+          }
+          data_collection_strategy: metafield(namespace: $namespace, key: $dataCollectionStrategyKey) {
             key
             value
             type
@@ -79,9 +88,11 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         webPixelFeatureToggle: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
         jsWebPosthogConfig: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
         jsWebPosthogFeatureToggle: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
+        dataCollectionStrategyKey: Constant.METAFIELD_KEY_DATA_COLLECTION_STRATEGY
       },
     }
   );
   const responseJson = await response.json();
+  console.dir(responseJson.data?.currentAppInstallation, { depth: 4});
   return responseJson.data!.currentAppInstallation;
 };

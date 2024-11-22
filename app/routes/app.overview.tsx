@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, BlockStack, Card, TextField,Text, Link, Select, Box } from '@shopify/polaris';
+import { Page, Layout, BlockStack, Card, TextField,Text, Link, Select, Box, Banner } from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -23,12 +23,15 @@ import { PosthogApiHostSchema } from 'common/dto/posthog-api-host.dto';
 import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
 import { APP_ENV } from '../../common/secret';
 import { urlWithShopParam } from '../../common/utils';
+import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy';
+import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
 
 const apiHostOptions = [
   { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
   { label: "https://eu.i.posthog.com", value:"https://eu.i.posthog.com"},
-  { label: "Custom Reverse Proxy", value:"Custom Reverse Proxy"}
+  { label: "Custom Reverse Proxy", value:"custom"}
 ]
+
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session: { shop } } = await authenticate.admin(request);
@@ -66,6 +69,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const message = dtoResultPosthogApiHost.error.flatten().fieldErrors.posthog_api_host?.join(' - ');
     return json({ ok: false, message: message }, { status: 400 });
   }
+
+  const dtoResultDataCollectionStrategy = DataCollectionStrategySchema.safeParse({data_collection_strategy: payload.data_collection_strategy} as DataCollectionStrategy)
+  if(!dtoResultDataCollectionStrategy.success) {
+    const message = dtoResultDataCollectionStrategy.error.flatten().fieldErrors.data_collection_strategy?.join(' - ');
+    return json({ ok: false, message: message }, { status: 400 });
+  }
   
   const dtoResultWebPixelFeatureToggle = WebPixelFeatureToggleSchema.safeParse({ web_pixel_feature_toggle: payload.web_pixel_feature_toggle } as WebPixelFeatureToggle);
   if (!dtoResultWebPixelFeatureToggle.success) {
@@ -78,7 +87,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const message = dtoResultJsWebPosthogFeatureToggle.error.flatten().fieldErrors.js_web_posthog_feature_toggle?.join(' - ');
     return json({ ok: false, message: message }, { status: 400 });
   }
-
   const metafieldsSetData = [
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
@@ -93,6 +101,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       ownerId: currentAppInstallation.id,
       type: 'boolean',
       value: dtoResultWebPixelFeatureToggle.data.web_pixel_feature_toggle.toString(),
+    },
+    {
+      key: Constant.METAFIELD_KEY_DATA_COLLECTION_STRATEGY,
+      namespace: Constant.METAFIELD_NAMESPACE,
+      ownerId: appId,
+      type: 'single_line_text_field',
+      value: dtoResultDataCollectionStrategy.data.data_collection_strategy.toString(),
     }
   ]
 
@@ -133,6 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       value: dtoResultPosthogApiHost.data.posthog_api_host?.toString(),
     })
   }
+
 
   await metafieldsSet(admin.graphql, metafieldsSetData);
   
@@ -175,6 +191,16 @@ export default function Index() {
     (value: string) => setPosthogApiHostCustom(value),
     [],
   );
+
+  //data collection strategry
+  type ValueOf<T> = T[keyof T];
+  const DataCollectionStrategyInitialState: ValueOf<DataCollectionStrategy> = currentAppInstallation.data_collection_strategy?.value as ValueOf<DataCollectionStrategy> || 'anonymized';
+  const [dataCollectionStrategy, setDataCollectionStrategy] = useState(DataCollectionStrategyInitialState);
+  const handleDataCollectionStrategyChange = useCallback(
+    (value: ValueOf<DataCollectionStrategy>) => setDataCollectionStrategy(value),
+    [],
+  );
+
   useEffect(() => {
     const data = fetcher.data as { ok: false; message: string } | { ok: true; message: string } | null;
     if (!data) {
@@ -228,7 +254,7 @@ export default function Index() {
 
 
 
-  const dirty = isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState != posthogApiHostCustom : PosthogApiHostInitialState != posthogApiHost || PosthogApiKeyInitialState != PostHogApiKey || jsWebPosthogFeatureEnabledInitialState != jsWebPosthogFeatureEnabled || webPixelFeatureToggleInitialState != webPixelFeatureEnabled
+  const dirty = isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState != posthogApiHostCustom : PosthogApiHostInitialState != posthogApiHost || PosthogApiKeyInitialState != PostHogApiKey || jsWebPosthogFeatureEnabledInitialState != jsWebPosthogFeatureEnabled || webPixelFeatureToggleInitialState != webPixelFeatureEnabled || DataCollectionStrategyInitialState != dataCollectionStrategy
 
   const submitSettings = () => {
     fetcher.submit(
@@ -237,6 +263,8 @@ export default function Index() {
         posthog_api_host: posthogApiHost == 'custom' ?  posthogApiHostCustom : posthogApiHost,
         js_web_posthog_feature_toggle: jsWebPosthogFeatureEnabled,
         web_pixel_feature_toggle: webPixelFeatureEnabled,
+        data_collection_strategy: dataCollectionStrategy,
+
       },
       {
         method: 'POST',
@@ -272,7 +300,7 @@ export default function Index() {
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
                     <TextField
                       label="PostHog Project API Key"
-                      labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/introduction`, shop), target:'_blank'}}
+                      labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
                       onChange={handleApiKeyChange}
@@ -282,16 +310,16 @@ export default function Index() {
                   
                   <Select
                     label="API Host"
-                    labelAction= {{content: 'What is this ?', url:'https://google.com', target:'_blank'}}
+                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
                     options={apiHostOptions}
                     onChange={handlePosthogApiHostChange}
                     value={posthogApiHost}
-                    helpText= "We recommend using a custom Reverse Proxy for optimal data handling and compliance."
+                    helpText= "We recommend using a Custom Reverse Proxy for optimal data handling and compliance."
                   />
                   {posthogApiHost == "custom" && (
                     <TextField
                     label="Custom Reverse Proxy"
-                    labelAction= {{content: 'What is this , and how do I configure it ?', url:'https://google.com', target:'_blank'}}
+                    labelAction= {{content: 'What is this , and how do I configure it ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-custom-reverse-proxy`, shop), target:'_blank'}}
                     inputMode='url'
                     type='url'
                     placeholder='https://example.com'
@@ -300,6 +328,25 @@ export default function Index() {
                     value={posthogApiHostCustom}
                   />
                   )}
+
+                  <Select
+                    label="Data Collection Strategy"
+                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
+                    options={[
+                      { label: "anonymized", value:"anonymized"},
+                      { label: "Identified By Consent", value:"non-anonymized-by-consent"},
+                      { label: "Identified", value:"non-anonymized"},
+                    ]}
+                    onChange={handleDataCollectionStrategyChange}
+                    value={dataCollectionStrategy}
+                    helpText= {<p>We recommend using <strong>Anonymized</strong> or <strong>Identified By Consent</strong> data collection strategy for GDPR compliance.</p>}
+                  />
+                  {
+                    dataCollectionStrategy === 'non-anonymized' && 
+                    (
+                      <Banner tone="warning" > <strong>Warning:</strong> This option <strong>bypasses customer privacy preferences</strong>  and should not be used in a <strong>production</strong> environment.</Banner>
+                    )
+                  }
                   
                   </BlockStack>
                 </Card>

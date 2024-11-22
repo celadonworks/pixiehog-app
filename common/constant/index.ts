@@ -7,4 +7,5 @@ export class Constant {
   static readonly METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE = "js_web_posthog_feature_toggle";
   static readonly METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG = "js_web_posthog_config";
   static readonly APP_POSTHOG_JS_WEB_THEME_APP_HANDLE = "posthog_js_web";
+  static readonly METAFIELD_KEY_DATA_COLLECTION_STRATEGY = "data_collection_strategy"
 }

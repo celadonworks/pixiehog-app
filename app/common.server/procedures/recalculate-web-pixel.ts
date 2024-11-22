@@ -6,7 +6,7 @@ import { WebPixelSettingsSchema } from '../../../common/dto/web-pixel-settings.d
 import { webPixelDelete } from '../mutations/web-pixel-delete';
 import { webPixelUpdate } from '../mutations/web-pixel-update';
 import { webPixelCreate } from '../mutations/web-pixel-create';
-
+import type { DataCollectionStrategy } from 'common/dto/data-collection-stratergy';
 export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   status: 'disconnected' | 'connected' | 'updated';
 } | null> {
@@ -15,18 +15,24 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   const metafieldWebPixelSettings = currentAppInstallation.web_pixel_settings?.jsonValue;
   const posthogApiKey = currentAppInstallation.posthog_api_key?.value;
   const posthogApihost = currentAppInstallation.posthog_api_host?.value;
-
+  type ValueOf<T> = T[keyof T];
+  const dataCollectionStrategyKey = currentAppInstallation.data_collection_strategy?.value as ValueOf<DataCollectionStrategy>
+  
   const webPixelFeatureToggle = currentAppInstallation.web_pixel_feature_toggle?.jsonValue == true
   const dtoResult = WebPixelSettingsSchema.safeParse({
     ...(posthogApiKey && {
       posthog_api_key: posthogApiKey,
-      posthog_api_host: posthogApihost,
+    }),
+    ...(posthogApihost && {
+       posthog_api_host: posthogApihost,
+    }),
+    ...(dataCollectionStrategyKey && {
+      data_collection_strategy: dataCollectionStrategyKey,
     }),
     ...(metafieldWebPixelSettings && {
       ...metafieldWebPixelSettings,
     }),
   } as WebPixelSettings);
-
   if (!webPixelFeatureToggle) {
     if (!shopifyWebPixel?.id) {
       // no pixel already nothing to do
@@ -70,8 +76,7 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   if (shopifyWebPixel?.id) {
     // we already have a web pixel
     // update settings
-    
-    
+
     await webPixelUpdate(graphq, shopifyWebPixel.id, convertedDtoResultData);
     return { status: 'updated' };
   }

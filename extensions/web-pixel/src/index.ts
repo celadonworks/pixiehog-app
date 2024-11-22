@@ -5,7 +5,8 @@ import { v7 as uuidv7 } from 'uuid';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 import { extractEventUUID } from './validate-uuid';
 
-register(async (extensionApi) => {  
+
+register(async (extensionApi) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
     analytics,
@@ -18,7 +19,7 @@ register(async (extensionApi) => {
   if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
-
+  console.log('v0.14');
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
 
   async function resolveDistinctId() {
@@ -37,39 +38,70 @@ register(async (extensionApi) => {
     return distinct_id;
   }
 
+  async function resetPosthog() {
+    const POSTHOG_KEY = `ph_${posthog_api_key}_posthog`;
+    const distinct_id = uuidv7();
+    await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
+  }
   const posthog = new PostHog(posthog_api_key, {
     fetch: fetch,
     host: posthog_api_host,
     persistence: 'memory',
-    flushAt: 1,
-    flushInterval: 0,
+    flushAt: 10,
+    flushInterval: 100,
     bootstrap: {
       distinctId: await resolveDistinctId(),
       isIdentifiedId: false,
     },
-    
-
   });
-
-
   type ValueOf<T> = T[keyof T];
-  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p : boolean) => void) {
-    return (event: T) => {
+  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) {
+    return async (event: T) => {
       // if event is disabled by merchant skip
       if (settings[event.name as keyof WebPixelSettings] === 'false') {
         return;
       }
-      const uuid: string | undefined = event.id
-      const validateEventUUID: string | undefined = extractEventUUID(uuid)
+      const uuid: string | undefined = event.id;
+      const validateEventUUID: string | undefined = extractEventUUID(uuid);
+      const anonymous: boolean = (() =>{
 
-      fn(event, validateEventUUID,customerPrivacyStatus.analyticsProcessingAllowed);
+        if(settings.data_collection_strategy == 'anonymized') {
+          return true
+        }
+        if(settings.data_collection_strategy == 'non-anonymized') {
+          return false
+        }
+        if(settings.data_collection_strategy == 'non-anonymized-by-consent') {
+          return  !customerPrivacyStatus.analyticsProcessingAllowed
+        }
+        return true
+      })()
+    
+      const PXHOG_ANONYMOUS_KEY = 'pxhog_anonymous_key';
+
+      const localStorageAnonymous = await localStorage.getItem(PXHOG_ANONYMOUS_KEY) as 'true' | 'false' | null;
+      if (localStorageAnonymous === null) {
+        await localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
+      }
+      if (
+        localStorageAnonymous !== null &&
+        localStorageAnonymous != String(anonymous) && anonymous == true) {
+        await resetPosthog();
+      }
+      if (
+        localStorageAnonymous !== null &&
+        localStorageAnonymous != String(anonymous)) {
+        await localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
+      }
+      
+      fn(event, validateEventUUID, anonymous);
     };
   }
 
   customerPrivacy.subscribe('visitorConsentCollected', (event) => {
     customerPrivacyStatus = event.customerPrivacy;
   });
-  
+
   const initProperties = {
     shop: init.data.shop,
     ...(init.data.customer && {
@@ -80,7 +112,7 @@ register(async (extensionApi) => {
       cart: init.data.cart,
     }),
   } as const;
- 
+
   const checkoutKeys = [
     'checkout_started',
     'checkout_completed',
@@ -92,20 +124,20 @@ register(async (extensionApi) => {
   for (const key of checkoutKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event,uuid, allowAnalytics) => {
+      preprocessEvent(async (event, uuid, anonymous) => {
         const distinctId = await resolveDistinctId();
 
         posthog.capture({
-          ...(uuid ? {uuid: uuid} : {}),
+          ...(uuid ? { uuid: uuid } : {}),
           distinctId,
           event: event.name,
           timestamp: new Date(event.timestamp),
           properties: {
             ...{
               ...initProperties,
-              ...(allowAnalytics == false && {
+              ...(anonymous == true && {
                 customer: undefined,
-                purchasingCompany: undefined
+                purchasingCompany: undefined,
               }),
               cart: undefined,
             },
@@ -114,25 +146,25 @@ register(async (extensionApi) => {
             $current_url: event.context.document.location.href,
             ...{
               ...event.data.checkout,
-              ...(allowAnalytics == false && {
+              ...(anonymous == true && {
                 billingAddress: undefined,
                 email: undefined,
                 order: {
                   ...event.data.checkout.order,
                   customer: {
                     ...event.data.checkout.order?.customer,
-                    id: undefined
+                    id: undefined,
                   },
-                  id: undefined
+                  id: undefined,
                 },
                 phone: undefined,
                 shippingAddress: undefined,
                 smsMarketingPhone: undefined,
-                })
-              
+              }),
             },
             ...(event.name == 'checkout_contact_info_submitted' &&
-              event.data.checkout.email && allowAnalytics == true && {
+              event.data.checkout.email &&
+              anonymous == false && {
                 $set: {
                   email: event.data.checkout.email,
                 },
@@ -147,18 +179,19 @@ register(async (extensionApi) => {
   for (const key of productCartKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event, uuid,allowAnalytics) => {
+      preprocessEvent(async (event, uuid, anonymous) => {
         const distinctId = await resolveDistinctId();
         posthog.capture({
-          ...(uuid ? {uuid: uuid} : {}),
+          ...(uuid ? { uuid: uuid } : {}),
           distinctId,
           event: event.name,
           timestamp: new Date(event.timestamp),
           properties: {
-            ...{...initProperties,
-              ...(allowAnalytics == false && {
+            ...{
+              ...initProperties,
+              ...(anonymous == true && {
                 customer: undefined,
-                purchasingCompany: undefined
+                purchasingCompany: undefined,
               }),
             },
             client_id: event.clientId,
@@ -183,20 +216,21 @@ register(async (extensionApi) => {
   for (const key of mouseEventsKeys) {
     analytics.subscribe(
       key,
-      preprocessEvent(async (event,uuid,allowAnalytics) => {
+      preprocessEvent(async (event, uuid, anonymous) => {
         // DOM events do not have window/document context
         // cannot set URL
         const distinctId = await resolveDistinctId();
         posthog.capture({
-          ...(uuid ? {uuid: uuid} : {}),
+          ...(uuid ? { uuid: uuid } : {}),
           distinctId,
           event: event.name,
           timestamp: new Date(event.timestamp),
           properties: {
-            ...{...initProperties,
-              ...(allowAnalytics == false && {
+            ...{
+              ...initProperties,
+              ...(anonymous == true && {
                 customer: undefined,
-                purchasingCompany: undefined
+                purchasingCompany: undefined,
               }),
             },
             client_id: event.clientId,
@@ -209,18 +243,20 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'page_viewed',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
-          ...{...initProperties,
-            ...(allowAnalytics == false && {
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
+              $process_person_profile: false,
             }),
           },
           client_id: event.clientId,
@@ -228,9 +264,10 @@ register(async (extensionApi) => {
           $current_url: event.context.document.location.href,
           ...event.data,
           /**set person properties in 1 call, this is most frequent event */
-          ...(init.data.customer && allowAnalytics == true && {
-            $set: init.data.customer,
-          }),
+          ...(init.data.customer &&
+            anonymous == false && {
+              $set: init.data.customer,
+            }),
         },
       });
     })
@@ -238,18 +275,19 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'collection_viewed',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
-          ...{...initProperties,
-            ...(allowAnalytics == false && {
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
             }),
           },
           client_id: event.clientId,
@@ -263,18 +301,19 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'product_viewed',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
-          ...{...initProperties,
-            ...(allowAnalytics == false && {
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
             }),
           },
           client_id: event.clientId,
@@ -288,19 +327,20 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'cart_viewed',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
+
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
           ...{
             ...initProperties,
-            ...(allowAnalytics == false && {
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
             }),
             cart: undefined,
           },
@@ -315,18 +355,19 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'search_submitted',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
-          ...{...initProperties,
-            ...(allowAnalytics == false && {
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
             }),
           },
           client_id: event.clientId,
@@ -340,7 +381,7 @@ register(async (extensionApi) => {
 
   analytics.subscribe(
     'form_submitted',
-    preprocessEvent(async (event,uuid,allowAnalytics) => {
+    preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       const emailRegex = /email/i;
       const [email] = event.data.element.elements
@@ -359,26 +400,28 @@ register(async (extensionApi) => {
           .filter((el): el is [string, string] => !!el)
       );
       posthog.capture({
-        ...(uuid ? {uuid: uuid} : {}),
+        ...(uuid ? { uuid: uuid } : {}),
         distinctId,
         event: event.name,
         timestamp: new Date(event.timestamp),
         properties: {
-          ...{...initProperties,
-            ...(allowAnalytics == false && {
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
               customer: undefined,
-              purchasingCompany: undefined
+              purchasingCompany: undefined,
             }),
           },
           client_id: event.clientId,
           form: event.data.element.elements,
           form_body: formBody,
           action: event.data.element.action,
-          ...(email && allowAnalytics == true && {
-            $set: {
-              email: email,
-            },
-          }),
+          ...(email &&
+            anonymous == false && {
+              $set: {
+                email: email,
+              },
+            }),
         },
       });
     })

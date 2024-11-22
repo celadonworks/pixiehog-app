@@ -5,7 +5,7 @@ type = "web_pixel_extension"
 runtime_context = "strict"
 
 [customer_privacy]
-analytics = true
+analytics = false
 marketing = false
 preferences = false
 sale_of_data = "disabled"
@@ -159,11 +159,19 @@ validations =  [
   { name = "choices", value = "[\"true\", \"false\"]" }
 ]
 
-[settings.fields.input_focused]
-name = "Process input_focused"
-description = "Process the input_focused event - where an on a page gains focus."
+#[settings.fields.input_focused]
+#name = "Process input_focused"
+#description = "Process the input_focused event - where an on a page gains focus."
+#type = "single_line_text_field"
+#validations =  [
+#  { name = "choices", value = "[\"true\", \"false\"]" }
+#]
+
+[settings.fields.data_collection_strategy]
+name = "Data collection strategy "
+description = "Data collection strategy"
 type = "single_line_text_field"
 validations =  [
-  { name = "choices", value = "[\"true\", \"false\"]" }
+  { name = "choices", value = "[\"anonymized\", \"non-anonymized\",\"non-anonymized-by-consent\"]" }
 ]
 

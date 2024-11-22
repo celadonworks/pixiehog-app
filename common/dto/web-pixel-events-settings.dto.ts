@@ -101,12 +101,15 @@ export const WebPixelEventsSettingsSchema = z.object({
       `event logs an instance where an input value changes.`
     )
     .default(false),
-    
-  input_focused: z.boolean()
+    /**
+     * 
+    input_focused: z.boolean()
     .describe(
       `event logs an instance where an input on a page gains focus.`
     )
     .default(false),
+    */
+
 });
 
 export type WebPixelEventsSettings = z.infer<typeof WebPixelEventsSettingsSchema>;

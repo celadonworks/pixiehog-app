@@ -3,8 +3,7 @@
 client_id = "0f1bffe9ed74227f1e5eb6298ce5fdbc"
 name = "Pxhog - Dev"
 handle = "pxhog-dev"
-
-application_url = "https://net-observation-taxation-interactive.trycloudflare.com"
+application_url = "https://textbooks-miracle-determining-two.trycloudflare.com"
 embedded = true
 
 [access.admin]
@@ -17,18 +16,23 @@ scopes = "read_customer_events,read_themes,write_pixels"
 
 [auth]
 redirect_urls = [
-  "https://net-observation-taxation-interactive.trycloudflare.com/auth/callback",
-  "https://net-observation-taxation-interactive.trycloudflare.com/auth/shopify/callback",
-  "https://net-observation-taxation-interactive.trycloudflare.com/api/auth/callback"
+  "https://textbooks-miracle-determining-two.trycloudflare.com/auth/callback",
+  "https://textbooks-miracle-determining-two.trycloudflare.com/auth/shopify/callback",
+  "https://textbooks-miracle-determining-two.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-10"
 
 [app_proxy]
-url = "https://net-observation-taxation-interactive.trycloudflare.com"
+url = "https://textbooks-miracle-determining-two.trycloudflare.com"
 subpath = "pxhog"
 prefix = "tools"
 
 [pos]
 embedded = false
+
+[build]
+dev_store_url = "celadonworksdev.myshopify.com"
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
