@@ -1,8 +1,46 @@
 {% if app.metafields.pxhog.js_web_posthog_feature_toggle == true and request.design_mode == false %}
 
     <script type="module">
-        import { uuidv7 } from "https://unpkg.com/uuidv7@^1";
+        import { uuidv7 } from  '{{'uuidv7.js' | asset_url}}';
         await (async () => {
+            function recalculateAnonymous () {
+                /**
+                * @type {'anonymized' | 'non-anonymized' | 'non-anonymized-by-consent' }
+                */
+                const data_collection_strategy = "{{ app.metafields.pxhog.data_collection_strategy }}";
+                const anonymous = (() =>{
+                    if(data_collection_strategy == 'anonymized') {
+                        return true
+                    }
+                    if(data_collection_strategy == 'non-anonymized') {
+                        return false
+                    }
+                    if(data_collection_strategy == 'non-anonymized-by-consent') {
+                        return  !window.Shopify.customerPrivacy.analyticsProcessingAllowed();
+                    }
+                    return true
+                })()
+                
+                const PXHOG_ANONYMOUS_KEY = 'pxhog_anonymous_key';
+    
+                const localStorageAnonymous = localStorage.getItem(PXHOG_ANONYMOUS_KEY);
+                if (localStorageAnonymous === null) {
+                    localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
+                }
+                
+                if ( localStorageAnonymous !== null && localStorageAnonymous != String(anonymous)) {
+                    localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
+                }
+
+                const hasNewDistinctId = (() => {
+                    if ( localStorageAnonymous !== null && localStorageAnonymous != String(anonymous) && anonymous == true) {
+                        return uuidv7();
+                    }
+                    return null
+                })()
+
+                return hasNewDistinctId
+            }
             if (typeof posthog !== 'undefined' || window.posthog) {
                 throw Error('[pxhog]: Posthog has already been initialized')
             }
@@ -103,47 +141,10 @@
                 (e.__SV = 1));
             })(document, window.posthog || []);
 
-
+            const hasNewDistinctId = recalculateAnonymous()
          
 
-             /**
-             * @type {'anonymized' | 'non-anonymized' | 'non-anonymized-by-consent' }
-            */
-            const data_collection_strategy = "{{ app.metafields.pxhog.data_collection_strategy }}";
-            console.log("data_collection_strategy")
-            console.log(data_collection_strategy)
-            const anonymous = (() =>{
-                if(data_collection_strategy == 'anonymized') {
-                    return true
-                }
-                if(data_collection_strategy == 'non-anonymized') {
-                    return false
-                }
-                if(data_collection_strategy == 'non-anonymized-by-consent') {
-                    return  !window.Shopify.customerPrivacy.analyticsProcessingAllowed();
-                }
-                return true
-            })()
-            
-            const PXHOG_ANONYMOUS_KEY = 'pxhog_anonymous_key';
-  
-            const localStorageAnonymous = localStorage.getItem(PXHOG_ANONYMOUS_KEY);
-            if (localStorageAnonymous === null) {
-                localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
-            }
-            
-            if ( localStorageAnonymous !== null && localStorageAnonymous != String(anonymous)) {
-                localStorage.setItem(PXHOG_ANONYMOUS_KEY, anonymous);
-            }
-
-            const hasNewDistinctId = (() => {
-                if ( localStorageAnonymous !== null && localStorageAnonymous != String(anonymous) && anonymous == true) {
-                    return uuidv7();
-                }
-                return null
-            })()
-
-               {% comment %}  
+            {% comment %}  
             /**
              * @typedef {Object} PostHogJsWebConfig
              * @property {string} api_host
@@ -229,7 +230,12 @@
              */
             {% endcomment %}
 
-
+            document.addEventListener("visitorConsentCollected", (event) => {
+                console.log({event: event.detail.analyticsAllowed})
+                if(recalculateAnonymous()){
+                    window.posthog.reset(true)
+                }
+            });
 
             /**
              * @type {Partial<PostHogJsWebConfig>}
