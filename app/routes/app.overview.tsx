@@ -333,7 +333,7 @@ export default function Index() {
                     label="Data Collection Strategy"
                     labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
                     options={[
-                      { label: "anonymized", value:"anonymized"},
+                      { label: "Anonymized", value:"anonymized"},
                       { label: "Identified By Consent", value:"non-anonymized-by-consent"},
                       { label: "Identified", value:"non-anonymized"},
                     ]}
