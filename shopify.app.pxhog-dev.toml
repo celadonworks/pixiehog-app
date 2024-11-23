@@ -41,11 +41,6 @@ compliance_topics = [ "shop/redact" ]
 uri = "/webhooks/shop/redact"
 
 
-[app_proxy]
-url = "https://textbooks-miracle-determining-two.trycloudflare.com"
-subpath = "pxhog"
-prefix = "tools"
-
 [pos]
 embedded = false
 

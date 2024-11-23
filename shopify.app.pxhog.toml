@@ -43,10 +43,6 @@ uri = "/webhooks/customers/data_request"
 compliance_topics = [ "shop/redact" ]
 uri = "/webhooks/shop/redact"
 
-[app_proxy]
-url = "https://app.pxhog.com"
-subpath = "pxhog"
-prefix = "tools"
 
 [pos]
 embedded = false
