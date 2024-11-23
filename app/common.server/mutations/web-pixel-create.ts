@@ -10,7 +10,7 @@ export async function webPixelCreate(graphql: AdminGraphqlClient, settings: WebP
           userErrors {
             code
             field
-            code
+            message
           }
           webPixel {
             id

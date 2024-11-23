@@ -9,7 +9,7 @@ export async function webPixelUpdate(graphql: AdminGraphqlClient, id: string, se
           userErrors {
             code
             field
-            code
+            message
           }
           webPixel {
             id
