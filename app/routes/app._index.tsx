@@ -339,12 +339,12 @@ export default function Index() {
                     ]}
                     onChange={handleDataCollectionStrategyChange}
                     value={dataCollectionStrategy}
-                    helpText= {<p>We recommend using <strong>Anonymized</strong> or <strong>Identified By Consent</strong> data collection strategy for GDPR compliance.</p>}
+                    helpText= {<p>We recommend using <strong>Anonymized</strong> or <strong>Identified By Consent</strong> data collection strategy to help with GDPR compliance.</p>}
                   />
                   {
                     dataCollectionStrategy === 'non-anonymized' && 
                     (
-                      <Banner tone="warning" > <strong>Warning:</strong> This option <strong>bypasses customer privacy preferences</strong>  and should not be used in a <strong>production</strong> environment.</Banner>
+                      <Banner tone="warning" >This option <strong>bypasses customer privacy preferences</strong>. <Link url={urlWithShopParam(`https://pxhog.com/docs/data-collection-strategies#3-identified`, shop)} rel="noreferrer" target='_blank'>Read more.</Link></Banner>
                     )
                   }
                   
