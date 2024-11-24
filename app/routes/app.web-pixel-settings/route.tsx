@@ -229,7 +229,7 @@ export default function WebPixelEvents() {
                     badgeText:"Action required",
                     badgeTone: "critical",
                     badgeToneOnDirty: "attention",
-                    bannerMessage: <div>Setup Posthog project API key <Link url="/app/overview">Here</Link>.</div>
+                    bannerMessage: <div>Setup Posthog project API key <Link url="/app">Here</Link>.</div>
                   },
                   {
                     trigger : allEventsDisabled,
