@@ -8,7 +8,7 @@ export async function webPixelDelete(graphql: AdminGraphqlClient, id: string) {
           userErrors {
             code
             field
-            code
+            message
           }
           deletedWebPixelId
         }

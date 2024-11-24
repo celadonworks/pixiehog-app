@@ -24,10 +24,22 @@ redirect_urls = [
 [webhooks]
 api_version = "2024-10"
 
-[app_proxy]
-url = "https://textbooks-miracle-determining-two.trycloudflare.com"
-subpath = "pxhog"
-prefix = "tools"
+[[webhooks.subscriptions]]
+topics = [ "app/uninstalled" ]
+uri = "/webhooks/app/uninstalled"
+
+[[webhooks.subscriptions]]
+compliance_topics = [ "customers/redact" ]
+uri = "/webhooks/customers/redact"
+
+[[webhooks.subscriptions]]
+compliance_topics = [ "customers/data_request"]
+uri = "/webhooks/customers/data_request"
+
+[[webhooks.subscriptions]]
+compliance_topics = [ "shop/redact" ]
+uri = "/webhooks/shop/redact"
+
 
 [pos]
 embedded = false

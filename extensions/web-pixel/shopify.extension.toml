@@ -168,7 +168,7 @@ validations =  [
 #]
 
 [settings.fields.data_collection_strategy]
-name = "Data collection strategy "
+name = "Data collection strategy"
 description = "Data collection strategy"
 type = "single_line_text_field"
 validations =  [
