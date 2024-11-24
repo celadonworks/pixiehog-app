@@ -232,7 +232,7 @@ export default function JsWebEvents() {
                     badgeToneOnDirty: 'attention',
                     bannerMessage: (
                       <div>
-                        Setup Posthog project API key <Link url="/app/overview">Here</Link>.
+                        Setup Posthog project API key <Link url="/app">Here</Link>.
                       </div>
                     ),
                   },
