@@ -359,7 +359,7 @@ export default function Index() {
                       variant='bodyLg'
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
                     <TextField
-                      label={`PostHog Project API Key (${PosthogApiKeyInitialState}/${PostHogApiKey})`}
+                      label="PostHog Project API Key"
                       labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
