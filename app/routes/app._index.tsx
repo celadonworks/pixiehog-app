@@ -19,7 +19,7 @@ import { queryCurrentAppInstallation } from 'app/common.server/queries/current-a
 import { Constant } from '../../common/constant/index';
 import { metafieldsSet } from '../common.server/mutations/metafields-set';
 import type { PosthogApiKey } from '../../common/dto/posthog-api-key.dto';
-import { PosthogApiKeySchema } from '../../common/dto/posthog-api-key.dto';
+import { PosthogApiKeySchema, posthogApiKeyPrimitive } from '../../common/dto/posthog-api-key.dto';
 import { WebPixelFeatureToggleSchema } from '../../common/dto/web-pixel-feature-toggle.dto';
 import type { WebPixelFeatureToggle } from '../../common/dto/web-pixel-feature-toggle.dto';
 import type { JsWebPosthogFeatureToggle } from '../../common/dto/js-web-feature-toggle.dto';
@@ -31,7 +31,7 @@ import type { WebPixelEventsSettings } from 'common/dto/web-pixel-events-setting
 import type { WebPixelSettingChoice } from './app.web-pixel-settings/interface/setting-row.interface';
 import { defaultWebPixelSettings } from './app.web-pixel-settings/default-web-pixel-settings';
 import type { PosthogApiHost} from 'common/dto/posthog-api-host.dto';
-import { PosthogApiHostSchema } from 'common/dto/posthog-api-host.dto';
+import { PosthogApiHostSchema, posthogApiHostPrimitive } from 'common/dto/posthog-api-host.dto';
 import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
 import { APP_ENV } from '../../common/secret';
 import { urlWithShopParam } from '../../common/utils';
@@ -196,12 +196,13 @@ export default function Index() {
   const PosthogApiHostInitialState = currentAppInstallation.posthog_api_host?.value || '';
   const isPosthogApiHostInitialStateCustom = PosthogApiHostInitialState == '' ? false : !apiHostOptions.some((option) => option.value == PosthogApiHostInitialState)
   const [posthogApiHost, setPosthogApiHost] = useState(isPosthogApiHostInitialStateCustom ? 'custom' : PosthogApiHostInitialState == '' ? '' : PosthogApiHostInitialState);
-  const [posthogApiHostError, setPosthogApiHostError] = useState<boolean>(false);
-  const [posthogCustomApiHostError, setCustomPosthogApiHostError] = useState<boolean>(false);
+  const [posthogApiKeyError, setPosthogApiKeyError] = useState<string>('');
+  const [posthogApiHostError, setPosthogApiHostError] = useState<string>('');
+  const [posthogCustomApiHostError, setCustomPosthogApiHostError] = useState<string>('');
   // api host
   const handlePosthogApiHostChange = useCallback(
     (value: string) => {
-      setPosthogApiHostError(false)
+      setPosthogApiHostError('')
       setPosthogApiHost(value)
     },
     [],
@@ -209,7 +210,7 @@ export default function Index() {
   const [posthogApiHostCustom, setPosthogApiHostCustom] = useState(isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState : '' );
   const handlePosthogApiHostCustomChange = useCallback(
     (value: string) => {
-      setCustomPosthogApiHostError(false)
+      setCustomPosthogApiHostError('')
       setPosthogApiHostCustom(value)
     },
     [],
@@ -312,29 +313,43 @@ export default function Index() {
 
 
   const submitSettings = () => {
+    let errors: string[] = [];
+
+    const parsedApiKey = posthogApiKeyPrimitive.safeParse(PostHogApiKey)
+    if (!parsedApiKey.success) {
+      const message = parsedApiKey.error.flatten().formErrors.join(' - ')
+      setPosthogApiKeyError(message)
+      errors.push(message);
+    }
+
     if (posthogApiHost == '') {
-      setPosthogApiHostError(true)
-      window.shopify.toast.show('Select API Host', {
-        isError: true,
-        duration: 2000,
-      });
-      return;
+      const errorMessage = 'Select API host'
+      setPosthogApiHostError(errorMessage)
+      errors.push(errorMessage)
     }
 
     if (posthogApiHost == 'custom') {
-      const parsedUrl = PosthogApiHostSchema.safeParse({
-        posthog_api_host:posthogApiHostCustom
-      })
+      const parsedUrl = posthogApiHostPrimitive.safeParse(posthogApiHostCustom)
       if (!parsedUrl.success) {
-        const message = parsedUrl.error.flatten().fieldErrors.posthog_api_host?.join(' - ') || 'invalid url';
+        const message = parsedUrl.error.flatten().formErrors.join(' - ') || 'invalid url';
+        setCustomPosthogApiHostError(message)
+        errors.push(message)
+      }
+    }
 
-        setCustomPosthogApiHostError(true)
-        window.shopify.toast.show(message, {
+    if (errors.length > 0) {
+      if (errors.length == 1) {
+        window.shopify.toast.show(errors[0], {
           isError: true,
           duration: 2000,
         });
-        return
+      } else {
+        window.shopify.toast.show('invalid settings', {
+          isError: true,
+          duration: 2000,
+        });
       }
+      return
     }
 
     fetcher.submit(
@@ -380,6 +395,7 @@ export default function Index() {
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
                     <TextField
                       label="PostHog Project API Key"
+                      error={posthogApiKeyError}
                       labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
