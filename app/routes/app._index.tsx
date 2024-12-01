@@ -27,9 +27,9 @@ import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy
 import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
 
 const apiHostOptions = [
-  { label: "https://us.i.posthog.com", value:"https://us.i.posthog.com"},
-  { label: "https://eu.i.posthog.com", value:"https://eu.i.posthog.com"},
-  { label: "Custom Reverse Proxy", value:"custom"}
+  { label: "Posthog US Cloud", value:"https://us.i.posthog.com"},
+  { label: "Posthog EU Cloud", value:"https://eu.i.posthog.com"},
+  { label: "Reverse Proxy", value:"custom"}
 ]
 
 
@@ -314,7 +314,7 @@ export default function Index() {
                     options={apiHostOptions}
                     onChange={handlePosthogApiHostChange}
                     value={posthogApiHost}
-                    helpText= "We recommend using a Custom Reverse Proxy for optimal data handling and compliance."
+                    helpText= "We recommend using a Reverse Proxy for optimal data collection."
                   />
                   {posthogApiHost == "custom" && (
                     <TextField
