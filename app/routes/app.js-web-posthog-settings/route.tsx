@@ -237,6 +237,17 @@ export default function JsWebEvents() {
                     ),
                   },
                   {
+                    trigger: !currentAppInstallation.posthog_api_host?.value,
+                    badgeText: 'Action required',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
+                    bannerMessage: (
+                      <div>
+                        Setup Posthog API host <Link url="/app">Here</Link>.
+                      </div>
+                    ),
+                  },
+                  {
                     trigger: !jsWebPosthogAppEmbedStatus,
                     badgeText: 'Action required',
                     badgeTone: 'critical',

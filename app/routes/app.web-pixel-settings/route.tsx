@@ -232,6 +232,13 @@ export default function WebPixelEvents() {
                     bannerMessage: <div>Setup Posthog project API key <Link url="/app">Here</Link>.</div>
                   },
                   {
+                    trigger : !currentAppInstallation.posthog_api_host?.value,
+                    badgeText:"Action required",
+                    badgeTone: "critical",
+                    badgeToneOnDirty: "attention",
+                    bannerMessage: <div>Setup Posthog API host <Link url="/app">Here</Link>.</div>
+                  },
+                  {
                     trigger : allEventsDisabled,
                     badgeText:"Action required",
                     badgeTone: "critical",
