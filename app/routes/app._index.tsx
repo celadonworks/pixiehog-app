@@ -196,7 +196,8 @@ export default function Index() {
   const PosthogApiHostInitialState = currentAppInstallation.posthog_api_host?.value || '';
   const isPosthogApiHostInitialStateCustom = PosthogApiHostInitialState == '' ? false : !apiHostOptions.some((option) => option.value == PosthogApiHostInitialState)
   const [posthogApiHost, setPosthogApiHost] = useState(isPosthogApiHostInitialStateCustom ? 'custom' : PosthogApiHostInitialState == '' ? '' : PosthogApiHostInitialState);
-  const [posthogApiHostError, setPosthogApiHostError] = useState<boolean>(false)
+  const [posthogApiHostError, setPosthogApiHostError] = useState<boolean>(false);
+  const [posthogCustomApiHostError, setCustomPosthogApiHostError] = useState<boolean>(false);
   // api host
   const handlePosthogApiHostChange = useCallback(
     (value: string) => {
@@ -207,7 +208,10 @@ export default function Index() {
   );
   const [posthogApiHostCustom, setPosthogApiHostCustom] = useState(isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState : '' );
   const handlePosthogApiHostCustomChange = useCallback(
-    (value: string) => setPosthogApiHostCustom(value),
+    (value: string) => {
+      setCustomPosthogApiHostError(false)
+      setPosthogApiHostCustom(value)
+    },
     [],
   );
 
@@ -317,6 +321,22 @@ export default function Index() {
       return;
     }
 
+    if (posthogApiHost == 'custom') {
+      const parsedUrl = PosthogApiHostSchema.safeParse({
+        posthog_api_host:posthogApiHostCustom
+      })
+      if (!parsedUrl.success) {
+        const message = parsedUrl.error.flatten().fieldErrors.posthog_api_host?.join(' - ') || 'invalid url';
+
+        setCustomPosthogApiHostError(true)
+        window.shopify.toast.show(message, {
+          isError: true,
+          duration: 2000,
+        });
+        return
+      }
+    }
+
     fetcher.submit(
       {
         posthog_api_key: PostHogApiKey,
@@ -380,6 +400,7 @@ export default function Index() {
                   {posthogApiHost == "custom" && (
                     <TextField
                     label="Custom Reverse Proxy"
+                    error={posthogCustomApiHostError}
                     labelAction= {{content: 'What is this , and how do I configure it ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-custom-reverse-proxy`, shop), target:'_blank'}}
                     inputMode='url'
                     type='url'
