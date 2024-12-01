@@ -1,6 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, BlockStack, Card, TextField,Text, Link, Select, Box, Banner } from '@shopify/polaris';
+import {
+  Page,
+  Layout,
+  BlockStack,
+  Card,
+  TextField,
+  Text,
+  Link,
+  Select,
+  Box,
+  Banner,
+  type SelectOption,
+} from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
@@ -26,10 +38,13 @@ import { urlWithShopParam } from '../../common/utils';
 import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy';
 import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
 
-const apiHostOptions = [
+type StrictOptions = Extract<SelectOption, {label: string}>
+
+const apiHostOptions: StrictOptions[] = [
+  { label: 'Select API Host', value: '', disabled: true},
   { label: "Posthog US Cloud", value:"https://us.i.posthog.com"},
   { label: "Posthog EU Cloud", value:"https://eu.i.posthog.com"},
-  { label: "Reverse Proxy", value:"custom"}
+  { label: "Reverse Proxy", value:"custom"},
 ]
 
 
@@ -180,10 +195,14 @@ export default function Index() {
 
   const PosthogApiHostInitialState = currentAppInstallation.posthog_api_host?.value || '';
   const isPosthogApiHostInitialStateCustom = PosthogApiHostInitialState == '' ? false : !apiHostOptions.some((option) => option.value == PosthogApiHostInitialState)
-  const [posthogApiHost, setPosthogApiHost] = useState(isPosthogApiHostInitialStateCustom ? 'custom' : PosthogApiHostInitialState == '' ? 'https://us.i.posthog.com' : PosthogApiHostInitialState);
+  const [posthogApiHost, setPosthogApiHost] = useState(isPosthogApiHostInitialStateCustom ? 'custom' : PosthogApiHostInitialState == '' ? '' : PosthogApiHostInitialState);
+  const [posthogApiHostError, setPosthogApiHostError] = useState<boolean>(false)
   // api host
   const handlePosthogApiHostChange = useCallback(
-    (value: string) => setPosthogApiHost(value),
+    (value: string) => {
+      setPosthogApiHostError(false)
+      setPosthogApiHost(value)
+    },
     [],
   );
   const [posthogApiHostCustom, setPosthogApiHostCustom] = useState(isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState : '' );
@@ -253,10 +272,51 @@ export default function Index() {
   const handleJsWebPosthogFeatureEnabledToggle = useCallback(() => setjsWebPosthogFeatureEnabled((value) => !value), []);
 
 
+  const dirty = useMemo(() => {
+    if (PosthogApiKeyInitialState != PostHogApiKey) {
+      return true;
+    }
+    if (jsWebPosthogFeatureEnabledInitialState != jsWebPosthogFeatureEnabled) {
+      return true
+    }
+    if (webPixelFeatureToggleInitialState != webPixelFeatureEnabled) {
+      return true
+    }
+    if (DataCollectionStrategyInitialState != dataCollectionStrategy) {
+      return true
+    }
+    if (posthogApiHost == "custom" && PosthogApiHostInitialState != posthogApiHostCustom) {
+      return true
+    }
+    if (posthogApiHost != "custom" && PosthogApiHostInitialState != posthogApiHost) {
+      return true
+    }
+    return false
+  }, [
+    PosthogApiKeyInitialState,
+    PostHogApiKey,
+    jsWebPosthogFeatureEnabledInitialState,
+    jsWebPosthogFeatureEnabled,
+    webPixelFeatureToggleInitialState,
+    webPixelFeatureEnabled,
+    DataCollectionStrategyInitialState,
+    dataCollectionStrategy,
+    posthogApiHost,
+    PosthogApiHostInitialState,
+    posthogApiHostCustom
+  ])
 
-  const dirty = isPosthogApiHostInitialStateCustom ? PosthogApiHostInitialState != posthogApiHostCustom : PosthogApiHostInitialState != posthogApiHost || PosthogApiKeyInitialState != PostHogApiKey || jsWebPosthogFeatureEnabledInitialState != jsWebPosthogFeatureEnabled || webPixelFeatureToggleInitialState != webPixelFeatureEnabled || DataCollectionStrategyInitialState != dataCollectionStrategy
 
   const submitSettings = () => {
+    if (posthogApiHost == '') {
+      setPosthogApiHostError(true)
+      window.shopify.toast.show('Select API Host', {
+        isError: true,
+        duration: 2000,
+      });
+      return;
+    }
+
     fetcher.submit(
       {
         posthog_api_key: PostHogApiKey,
@@ -299,7 +359,7 @@ export default function Index() {
                       variant='bodyLg'
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
                     <TextField
-                      label="PostHog Project API Key"
+                      label={`PostHog Project API Key (${PosthogApiKeyInitialState}/${PostHogApiKey})`}
                       labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
@@ -310,6 +370,7 @@ export default function Index() {
                   
                   <Select
                     label="API Host"
+                    error={posthogApiHostError}
                     labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
                     options={apiHostOptions}
                     onChange={handlePosthogApiHostChange}
@@ -344,7 +405,7 @@ export default function Index() {
                   {
                     dataCollectionStrategy === 'non-anonymized' && 
                     (
-                      <Banner tone="warning" >This option <strong>bypasses customer privacy preferences</strong>. <Link url={urlWithShopParam(`https://pxhog.com/docs/data-collection-strategies#3-identified`, shop)} rel="noreferrer" target='_blank'>Read more.</Link></Banner>
+                      <Banner tone="warning" >This option <strong>bypasses customer privacy preferences</strong>. <Link url={urlWithShopParam(`https://pxhog.com/docs/data-collection-strategies#3-identified`, shop)} target='_blank'>Read more.</Link></Banner>
                     )
                   }
                   
@@ -368,6 +429,13 @@ export default function Index() {
                             badgeTone: "critical",
                             badgeToneOnDirty: "attention",
                             bannerMessage: "Setup Posthog project API key."
+                          },
+                          {
+                            trigger : !posthogApiHost,
+                            badgeText:"Action required",
+                            badgeTone: "critical",
+                            badgeToneOnDirty: "attention",
+                            bannerMessage: "Setup Posthog API Host."
                           },
                           {
                             trigger : allEventsDisabled,
@@ -400,6 +468,13 @@ export default function Index() {
                             badgeTone: "critical",
                             badgeToneOnDirty: "attention",
                             bannerMessage: "Setup Posthog project API key."
+                          },
+                          {
+                            trigger : !posthogApiHost,
+                            badgeText:"Action required",
+                            badgeTone: "critical",
+                            badgeToneOnDirty: "attention",
+                            bannerMessage: "Setup Posthog API Host."
                           },
                           {
                             trigger: !jsWebPosthogAppEmbedStatus,
