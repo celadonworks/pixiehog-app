@@ -25,7 +25,7 @@ function StatusBadge({
 }: Pick<FeatureStatusManagerProps, 'featureEnabled' | 'customActions'> & { dirty: boolean}) {
   if (!featureEnabled) {
     return (
-      <Badge size="large" tone={dirty ? 'attention' : 'enabled'}>
+      <Badge size="large" tone="enabled">
         Disconnected
       </Badge>
     );
