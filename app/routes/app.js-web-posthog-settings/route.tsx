@@ -17,6 +17,7 @@ import FeatureStatusManager from '../../../common/components/FeatureStatusManage
 import { detailedDiff } from 'deep-object-diff';
 import { appEmbedStatus } from '../../common.server/procedures/app-embed-status';
 import { APP_ENV } from '../../../common/secret';
+import { SettingType } from '../../../common/interfaces/feature-settings.interface';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session: { shop } } = await authenticate.admin(request);
   const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
@@ -91,6 +92,20 @@ export default function JsWebEvents() {
     if (jsWebPosthogSettingsMetafieldValue?.[entry.key]) {
       return {
         ...entry,
+        ...(entry.key == 'ui_host' && entry.type == SettingType.Select && {
+          selectOptions: entry.selectOptions.map((v) => {
+            const label = (() => {
+              if (v == 'https://eu.posthog.com') {
+                return 'Posthog EU'
+              }
+              return 'Posthog US'
+            })();
+            return {
+              label: label,
+              value: v,
+            }
+          })
+        }),
         value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
       } as JsWebPosthogSettingChoice;
     }
