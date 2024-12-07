@@ -1,5 +1,7 @@
 {
-  "name": "posthog-web-pixel",
+  "name": "pxhog",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "build": "remix vite:build",
