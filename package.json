@@ -1,5 +1,5 @@
 {
-  "name": "posthog-web-pixel",
+  "name": "pxhog",
   "private": true,
   "scripts": {
     "build": "remix vite:build",
