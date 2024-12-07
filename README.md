@@ -1,3 +1,8 @@
+<a href="https://pxhog.com/">
+  <img src=".github/pxhog-banner.svg" alt="Pxhog">
+</a>
+
+---
 
 # **Pxhog - Shopify + PostHog Made Easy**
 
