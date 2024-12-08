@@ -6,7 +6,7 @@ FSL-1.1-ALv2
 
 ## Notice
 
-Copyright 2025 CeladonWorks OÜ
+Copyright 2024 CeladonWorks OÜ
 
 ## Terms and Conditions
 
