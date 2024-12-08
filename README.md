@@ -60,7 +60,11 @@ We welcome contributions from the community, whether you're a developer, a Shopi
 
 ## **License**
 
-Pxhog is released under the [MIT License](link-to-license).
+Pxhog is released under the [Functional Source License (FSL)](LICENSE.md), which converts to Apache 2.0 after two years.
+
+**TLDR**:  
+- You may use, modify, and commercialize this code to create and host **Custom** or **Unlisted** **Shopify Apps** for private use.  
+- You may **NOT** use this code to create or distribute **Public Shopify Apps** listed in the Shopify App Store.
 
 ---
 
