@@ -1,12 +1,6 @@
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-  json,
-  useLoaderData,
-} from "@remix-run/react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, json, useLoaderData, useLocation } from '@remix-run/react';
+import posthog from 'posthog-js';
+import { useEffect, useRef } from 'react';
 
 export async function loader() {
   return json({
@@ -17,6 +11,39 @@ export async function loader() {
   });
 }
 
+function PosthogInit() {
+  const location = useLocation();
+  useEffect(() => {
+    if (!window.ENV.POSTHOG_API_KEY) {
+      console.log('posthog disabled - no api key');
+      return;
+    }
+    posthog.init(window.ENV.POSTHOG_API_KEY, {
+      api_host: window.ENV.POSTOHG_API_HOST,
+      person_profiles: 'always',
+      capture_pageleave: false,
+      enable_recording_console_log: true,
+      persistence: 'localStorage',
+    });
+  });
+  let lastUrl = useRef('');
+  useEffect(() => {
+    const url = window.origin + location.pathname;
+
+    if (url == lastUrl.current) {
+      return;
+    }
+    lastUrl.current = url;
+    console.log('registering');
+    console.log(window.origin + location.pathname);
+    posthog.capture('$pageview', {
+      $current_url: url,
+    });
+  }, [location.pathname]);
+  return null;
+}
+
+
 export default function App() {
   const data = useLoaderData<typeof loader>();
   return (
@@ -25,24 +52,20 @@ export default function App() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <link rel="preconnect" href="https://cdn.shopify.com/" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css"
-        />
+        <link rel="stylesheet" href="https://cdn.shopify.com/static/fonts/inter/v4/styles.css" />
         <Meta />
         <Links />
       </head>
       <body>
-      <script
+        <script
           dangerouslySetInnerHTML={{
-            __html: `window.ENV = ${JSON.stringify(
-              data.ENV
-            )}`,
+            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
           }}
         />
         <Outlet />
         <ScrollRestoration />
         <Scripts />
+        <PosthogInit />
       </body>
     </html>
   );

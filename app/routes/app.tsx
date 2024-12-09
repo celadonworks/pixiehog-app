@@ -3,10 +3,12 @@ import { json } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
-import { NavMenu } from "@shopify/app-bridge-react";
+import { NavMenu, useAppBridge } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
 import { authenticate } from "../shopify.server";
+import { useEffect, useRef } from "react";
+import posthog from "posthog-js";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
@@ -15,6 +17,17 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
+
+function PosthogInit() {
+  const shopify = useAppBridge();
+  useEffect(() => {
+    posthog.identify(
+      posthog.get_distinct_id(), // Replace 'distinct_id' with your user's unique identifier
+      { shop: shopify.config.shop } // optional: set additional person properties
+    );
+  }, []);
+  return null;
+}
 
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
@@ -33,6 +46,7 @@ export default function App() {
         </Link>
       </NavMenu>
       <Outlet />
+      <PosthogInit/>
     </AppProvider>
   );
 }
