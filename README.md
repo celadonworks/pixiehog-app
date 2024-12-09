@@ -25,7 +25,7 @@ Pxhog solves these problems by providing:
   - Sends anonymized data when user consent is pending or declined.
   - Captures full, detailed data when user consent is granted, fully compliant with GDPR, CCPA, and other privacy laws.
 - **Opinionated Defaults**: Comes with a pre-configured setup to track key events like `checkout_completed`, `page_viewed`, and `product_added_to_cart` Web Pixel events.
-- **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and (Web Pixels Standard & DOM events)[https://shopify.dev/docs/api/web-pixels-api/standard-events], giving you full control over your setup.
+- **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and [Web Pixels Standard & DOM events](https://shopify.dev/docs/api/web-pixels-api/standard-events), giving you full control over your setup.
 - **Documentation Hub**: Accompanies a dedicated documentation site with a clear, opinionated guide on how to use PostHog effectively with Shopify.
 - **Open Source**: Built for transparency and collaboration. Contributions, feature requests, and feedback are welcome!
 
@@ -46,7 +46,7 @@ Pxhog is for:
    - Adds Web Pixel to the store.
    - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using Shopify Web Pixels API.
    - Respects user consent via the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy).
-   - Optionally: turn on on-site snippet for [Session Replays](https://posthog.com/session-replay) and (Experiments)[https://posthog.com/experiments] support.
+   - Optionally: turn on on-site snippet for [Session Replays](https://posthog.com/session-replay) and [Experiments](https://posthog.com/experiments) support.
 4. Use the app to customize PostHog configuration properties and Web Pixel events as needed, beyond the default setup.
 5. Dive into PostHog to explore your analytics and gain actionable insights.
 
