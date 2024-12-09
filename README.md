@@ -43,7 +43,7 @@ Pxhog is for:
 2. Configure your PostHog API key within the app.
 3. Pxhog automatically:
    - Adds Web Pixel to the store.
-   - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using Shopify Web Pixels API.
+   - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
    - Respects user consent via the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy).
    - Optionally: turn on on-site snippet for [Session Replays](https://posthog.com/session-replay) and [Experiments](https://posthog.com/experiments) support.
 4. Use the app to customize PostHog configuration properties and Web Pixel events as needed, beyond the default setup.
