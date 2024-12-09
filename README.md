@@ -6,7 +6,7 @@
 
 # **Pxhog - Shopify + PostHog Made Easy**
 
-Pxhog is an open-source Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, Pxhog helps you set up PostHog the **right way**, ensuring integration with [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) for privacy compliance and using the [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
+Pxhog is a Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, Pxhog helps you set up PostHog the **right way**, ensuring integration with [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) for privacy compliance and using the [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
 
 ## **Motiviation**
 
@@ -27,7 +27,6 @@ Pxhog solves these problems by providing:
 - **Opinionated Defaults**: Comes with a pre-configured setup to track key events like `checkout_completed`, `page_viewed`, and `product_added_to_cart` Web Pixel events.
 - **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and [Web Pixels Standard & DOM events](https://shopify.dev/docs/api/web-pixels-api/standard-events), giving you full control over your setup.
 - **Documentation Hub**: Accompanies a dedicated documentation site with a clear, opinionated guide on how to use PostHog effectively with Shopify.
-- **Open Source**: Built for transparency and collaboration. Contributions, feature requests, and feedback are welcome!
 
 ## **Who Is Pxhog For?**
 
