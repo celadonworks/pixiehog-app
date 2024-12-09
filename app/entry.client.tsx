@@ -1,10 +1,11 @@
-import { RemixBrowser } from '@remix-run/react';
+import { RemixBrowser, useNavigation } from '@remix-run/react';
 import { useAppBridge } from '@shopify/app-bridge-react';
 import posthog from 'posthog-js';
 import { startTransition, StrictMode, useEffect } from 'react';
 import { hydrateRoot } from 'react-dom/client';
 function PosthogInit() {
   const shopify = useAppBridge();
+  const navigation = useNavigation();
   useEffect(() => {
     if (!window.ENV.POSTHOG_API_KEY) {
       console.log('posthog disabled - no api key')
@@ -21,7 +22,19 @@ function PosthogInit() {
       posthog.get_distinct_id(),  // Replace 'distinct_id' with your user's unique identifier
       { shop: shopify.config.shop, } // optional: set additional person properties
     );
-  }, []);
+  });
+
+  useEffect(() => {
+    if (navigation.state != 'idle') {
+      return
+    }
+    posthog.capture(
+      '$pageview',
+      {
+        '$current_url': window.location.href,
+      }
+    )
+  }, [navigation.state])
 
   return null;
 }
