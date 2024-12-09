@@ -6,7 +6,7 @@
 
 # **Pxhog - Shopify + PostHog Made Easy**
 
-Pxhog is an open-source Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, Pxhog helps you set up PostHog the **right way**, ensuring integration with Shopify Customer Privacy API for privacy compliance and using the Shopify Web Pixel feature.
+Pxhog is an open-source Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, Pxhog helps you set up PostHog the **right way**, ensuring integration with [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) for privacy compliance and using the [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
 
 ## **Motiviation**
 
@@ -14,7 +14,7 @@ Integrating PostHog into Shopify can be a challenging and error-prone process, e
 
 Pxhog solves these problems by providing:
 - **Simplicity**: A seamless setup process that abstracts away the technical complexity.
-- **Compliance**: Built-in integration with the Shopify Customer Privacy API ensures that all tracking respects user consent, sending anonymized data when necessary or detailed data when permitted.
+- **Compliance**: Built-in integration with the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) ensures that all tracking respects user consent, sending anonymized data when necessary or detailed data when permitted.
 - **Accessibility**: Makes PostHog accessible to merchants with no coding experience.
 - **Efficiency**: Saves developers and merchants hours of integration time into Shopify and reducing the potential for mistakes.
 
@@ -24,8 +24,8 @@ Pxhog solves these problems by providing:
 - **Privacy-First Tracking**:
   - Sends anonymized data when user consent is pending or declined.
   - Captures full, detailed data when user consent is granted, fully compliant with GDPR, CCPA, and other privacy laws.
-- **Opinionated Defaults**: Comes with a pre-configured setup to track key events like `checkout_completed`, `product_viewed`, and `product_added_to_cart` Web Pixel events.
-- **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and Web Pixel events, giving you full control over your setup.
+- **Opinionated Defaults**: Comes with a pre-configured setup to track key events like `checkout_completed`, `page_viewed`, and `product_added_to_cart` Web Pixel events.
+- **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and (Web Pixels Standard & DOM events)[https://shopify.dev/docs/api/web-pixels-api/standard-events], giving you full control over your setup.
 - **Documentation Hub**: Accompanies a dedicated documentation site with a clear, opinionated guide on how to use PostHog effectively with Shopify.
 - **Open Source**: Built for transparency and collaboration. Contributions, feature requests, and feedback are welcome!
 
@@ -44,15 +44,15 @@ Pxhog is for:
 2. Configure your PostHog API key within the app.
 3. Pxhog automatically:
    - Adds Web Pixel to the store.
-   - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using Shopify’s Web Pixels API.
-   - Respects user consent via the Shopify Customer Privacy API.
-   - Optionally: turn on on-site snippet for Session Replays and Experiments support.
+   - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using Shopify Web Pixels API.
+   - Respects user consent via the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy).
+   - Optionally: turn on on-site snippet for [Session Replays](https://posthog.com/session-replay) and (Experiments)[https://posthog.com/experiments] support.
 4. Use the app to customize PostHog configuration properties and Web Pixel events as needed, beyond the default setup.
 5. Dive into PostHog to explore your analytics and gain actionable insights.
 
-## **Open Source and Community-Driven**
+## **Community-Driven**
 
-Pxhog is open source because:
+Pxhog is community-driven because:
 - **Transparency matters**: Merchants and developers can trust the app to handle data responsibly.
 - **Collaboration drives innovation**: Feature requests and contributions help make Pxhog better for everyone.
 
