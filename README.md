@@ -22,6 +22,7 @@ Pxhog solves these problems by providing:
 
 - **Plug-and-Play Integration**: Install Pxhog on your Shopify store and start tracking with PostHog in minutes.
 - **Privacy-First Tracking**:
+  - Uses [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) to verify data processing permissions & consent.
   - Sends anonymized data when user consent is pending or declined.
   - Captures full, detailed data when user consent is granted, fully compliant with GDPR, CCPA, and other privacy laws.
 - **Opinionated Defaults**: Comes with a pre-configured setup to track key events like `checkout_completed`, `page_viewed`, and `product_added_to_cart` Web Pixel events.
