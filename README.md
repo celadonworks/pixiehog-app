@@ -48,7 +48,7 @@ Pxhog is for:
    - Respects user consent via the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy).
    - Optionally: turn on on-site snippet for [Session Replays](https://posthog.com/session-replay) and [Experiments](https://posthog.com/experiments) support.
 4. Use the app to customize PostHog configuration properties and Web Pixel events as needed, beyond the default setup.
-5. Dive into PostHog to explore your analytics and gain actionable insights.
+5. Dive into [PostHog Product Analytics](https://posthog.com/product-analytics) to explore & visualize your data and gain actionable insights.
 
 ## **Community-Driven**
 
