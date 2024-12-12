@@ -12,6 +12,8 @@ import {
   Box,
   Banner,
   type SelectOption,
+  InlineStack,
+  Button,
 } from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
@@ -46,7 +48,6 @@ const apiHostOptions: StrictOptions[] = [
   { label: "Posthog EU Cloud", value:"https://eu.i.posthog.com"},
   { label: "Reverse Proxy", value:"custom"},
 ]
-
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { admin, session: { shop } } = await authenticate.admin(request);
@@ -368,6 +369,9 @@ export default function Index() {
     );
   };
 
+  const posthogDashboardUrl = posthogApiHost == 'custom' || posthogApiHost == '' ? 'https://app.posthog.com' : posthogApiHost == 'https://us.i.posthog.com' ? 'https://us.posthog.com' : 'https://eu.posthog.com'
+
+
   return (
       <Page
         title="Account setup"
@@ -384,12 +388,15 @@ export default function Index() {
               <BlockStack gap="500">
                 <Card>
                   <BlockStack gap="500">
+                  <InlineStack  align='space-between'>
                     <Text 
                       variant='headingLg'
                       as='h3'
                     >
                     Start here
                     </Text>
+                    <Button variant='primary' url={posthogDashboardUrl} target='_blank'>My Posthog Dashboard</Button>
+                  </InlineStack>
                     <Text 
                       variant='bodyLg'
                       as='p'>This is all you need to be fully integrated with Posthog</Text>
