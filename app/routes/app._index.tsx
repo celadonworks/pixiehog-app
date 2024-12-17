@@ -369,7 +369,19 @@ export default function Index() {
     );
   };
 
-  const posthogDashboardUrl = posthogApiHost == 'custom' || posthogApiHost == '' ? 'https://app.posthog.com' : posthogApiHost == 'https://us.i.posthog.com' ? 'https://us.posthog.com' : 'https://eu.posthog.com'
+  const posthogDashboardUrl = useMemo(() => {
+    if (posthogApiHost == 'https://us.i.posthog.com') {
+      return 'https://us.posthog.com';
+    }
+    
+    if (posthogApiHost == 'https://eu.i.posthog.com') {
+      return 'https://eu.posthog.com';
+    }
+
+    return 'https://app.posthog.com';
+  }, [
+    posthogApiHost
+  ]);
 
 
   return (
