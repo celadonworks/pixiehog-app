@@ -22,7 +22,7 @@ export type WebPixelCreateMutationVariables = AdminTypes.Exact<{
 }>;
 
 
-export type WebPixelCreateMutation = { webPixelCreate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
+export type WebPixelCreateMutation = { webPixelCreate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
 
 export type WebPixelDeleteMutationVariables = AdminTypes.Exact<{
   id: AdminTypes.Scalars['ID']['input'];
@@ -31,7 +31,7 @@ export type WebPixelDeleteMutationVariables = AdminTypes.Exact<{
 
 export type WebPixelDeleteMutation = { webPixelDelete?: AdminTypes.Maybe<(
     Pick<AdminTypes.WebPixelDeletePayload, 'deletedWebPixelId'>
-    & { userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field'>> }
+    & { userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>> }
   )> };
 
 export type WebPixelUpdateMutationVariables = AdminTypes.Exact<{
@@ -40,7 +40,7 @@ export type WebPixelUpdateMutationVariables = AdminTypes.Exact<{
 }>;
 
 
-export type WebPixelUpdateMutation = { webPixelUpdate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
+export type WebPixelUpdateMutation = { webPixelUpdate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
 
 export type CurrentAppInstallationQueryVariables = AdminTypes.Exact<{
   namespace: AdminTypes.Scalars['String']['input'];
@@ -88,9 +88,9 @@ interface GeneratedQueryTypes {
 interface GeneratedMutationTypes {
   "#graphql\n      mutation metafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {\n        metafieldsDelete(metafields: $metafields) {\n          deletedMetafields {\n            key\n            namespace\n          }\n          userErrors {\n            field\n            message\n          }\n        }\n      }\n    ": {return: MetafieldsDeleteMutation, variables: MetafieldsDeleteMutationVariables},
   "#graphql\n      mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {\n        metafieldsSet(metafields: $metafields) {\n          metafields {\n            key\n            namespace\n            value\n            createdAt\n            updatedAt\n          }\n          userErrors {\n            field\n            message\n            code\n          }\n        }\n      }\n    ": {return: MetafieldsSetMutation, variables: MetafieldsSetMutationVariables},
-  "#graphql\n      mutation webPixelCreate($webPixel: WebPixelInput!) {\n        webPixelCreate(webPixel: $webPixel) {\n          userErrors {\n            code\n            field\n            code\n          }\n          webPixel {\n            id\n            settings\n          }\n        }\n      }\n    ": {return: WebPixelCreateMutation, variables: WebPixelCreateMutationVariables},
-  "#graphql\n      mutation webPixelDelete($id: ID!) {\n        webPixelDelete(id: $id) {\n          userErrors {\n            code\n            field\n            code\n          }\n          deletedWebPixelId\n        }\n      }\n    ": {return: WebPixelDeleteMutation, variables: WebPixelDeleteMutationVariables},
-  "#graphql\n      mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {\n        webPixelUpdate(id: $id, webPixel: $webPixel) {\n          userErrors {\n            code\n            field\n            code\n          }\n          webPixel {\n            id\n            settings\n          }\n        }\n      }\n    ": {return: WebPixelUpdateMutation, variables: WebPixelUpdateMutationVariables},
+  "#graphql\n      mutation webPixelCreate($webPixel: WebPixelInput!) {\n        webPixelCreate(webPixel: $webPixel) {\n          userErrors {\n            code\n            field\n            message\n          }\n          webPixel {\n            id\n            settings\n          }\n        }\n      }\n    ": {return: WebPixelCreateMutation, variables: WebPixelCreateMutationVariables},
+  "#graphql\n      mutation webPixelDelete($id: ID!) {\n        webPixelDelete(id: $id) {\n          userErrors {\n            code\n            field\n            message\n          }\n          deletedWebPixelId\n        }\n      }\n    ": {return: WebPixelDeleteMutation, variables: WebPixelDeleteMutationVariables},
+  "#graphql\n      mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {\n        webPixelUpdate(id: $id, webPixel: $webPixel) {\n          userErrors {\n            code\n            field\n            message\n          }\n          webPixel {\n            id\n            settings\n          }\n        }\n      }\n    ": {return: WebPixelUpdateMutation, variables: WebPixelUpdateMutationVariables},
 }
 declare module '@shopify/admin-api-client' {
   type InputMaybe<T> = AdminTypes.InputMaybe<T>;

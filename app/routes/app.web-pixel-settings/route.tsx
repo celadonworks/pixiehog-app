@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Page,
@@ -85,13 +85,11 @@ export default function WebPixelEvents() {
     | WebPixelEventsSettings;
 
   const webPixelSettingsInitialState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
-    if(webPixelSettingsMetafieldValue?.[entry.key]){
       return {
         ...entry,
         value: webPixelSettingsMetafieldValue?.[entry.key] === true,
       } as WebPixelSettingChoice
-    }
-      return entry
+
     }
     
   );
@@ -199,8 +197,24 @@ export default function WebPixelEvents() {
       }
     );
   };
-  const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings)  
-  const dirty = Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) || webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
+
+  const dirty = useMemo(() => {
+    console.dir({
+      webPixelSettings,
+      webPixelSettingsInitialState
+    })
+    console.dir({
+      webPixelFeatureEnabled,
+      webPixelFeatureToggleInitialState,
+    })
+    const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings);
+    console.dir(diff)
+    if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
+      return true;
+    }
+    return webPixelFeatureEnabled != webPixelFeatureToggleInitialState
+  }, [webPixelSettings, webPixelFeatureEnabled, webPixelFeatureToggleInitialState, webPixelSettingsInitialState]);
+
   const allEventsDisabled = webPixelSettings.every((entry) => !entry.value)
   return (
     <Page

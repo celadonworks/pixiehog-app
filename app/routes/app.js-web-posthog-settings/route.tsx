@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
 import { authenticate } from '../../shopify.server';
@@ -89,28 +89,25 @@ export default function JsWebEvents() {
     | JsWebPosthogConfig;
 
   const jsWebPosthogSettingsInitialState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
-    if (jsWebPosthogSettingsMetafieldValue?.[entry.key]) {
-      return {
-        ...entry,
-        ...(entry.key == 'ui_host' && entry.type == SettingType.Select && {
-          selectOptions: entry.selectOptions.map((v) => {
-            const label = (() => {
-              if (v == 'https://eu.posthog.com') {
-                return 'Posthog EU'
-              }
-              return 'Posthog US'
-            })();
-            return {
-              label: label,
-              value: v,
+    return {
+      ...entry,
+      ...(entry.key == 'ui_host' && entry.type == SettingType.Select && {
+        selectOptions: entry.selectOptions.map((v) => {
+          const label = (() => {
+            if (v == 'https://eu.posthog.com') {
+              return 'Posthog EU'
             }
-          })
-        }),
-        value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
-      } as JsWebPosthogSettingChoice;
-    }
+            return 'Posthog US'
+          })();
+          return {
+            label: label,
+            value: v,
+          }
+        })
+      }),
+      value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
+    } as JsWebPosthogSettingChoice;
 
-    return entry;
   });
 
   const [jsWebPosthogSettings, setJsWebPosthogSettings] = useState(jsWebPosthogSettingsInitialState);
@@ -215,10 +212,15 @@ export default function JsWebEvents() {
     );
   };
 
-  const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings);
-  const dirty =
-    Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0) ||
-    jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState;
+  const dirty = useMemo(() => {
+   
+    const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings);
+
+    if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
+      return true;
+    }
+    return jsWebPosthogFeatureEnabled != jsWebPosthogFeatureEnabledInitialState
+  }, [jsWebPosthogSettings, jsWebPosthogSettingsInitialState, jsWebPosthogFeatureEnabledInitialState, jsWebPosthogFeatureEnabled]);
   return (
     <Page
       title="JS Web Config"
