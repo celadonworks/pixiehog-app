@@ -199,16 +199,8 @@ export default function WebPixelEvents() {
   };
 
   const dirty = useMemo(() => {
-    console.dir({
-      webPixelSettings,
-      webPixelSettingsInitialState
-    })
-    console.dir({
-      webPixelFeatureEnabled,
-      webPixelFeatureToggleInitialState,
-    })
+   
     const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings);
-    console.dir(diff)
     if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
       return true;
     }
