@@ -1,5 +1,5 @@
 <a href="https://pixiehog.com/">
-  <img src=".github/pxhog-banner.svg" alt="Pixiehog">
+  <img src=".github/pixiehog-banner.svg" alt="Pixiehog">
 </a>
 
 ---
