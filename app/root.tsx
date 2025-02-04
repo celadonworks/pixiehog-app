@@ -13,6 +13,16 @@ export async function loader() {
   });
 }
 
+export async function clientLoader() {
+  return {
+    ENV: {
+      POSTHOG_API_KEY: window.ENV.POSTHOG_API_KEY,
+      POSTOHG_API_HOST: window.ENV.POSTOHG_API_HOST,
+      APP_POSTHOG_JS_WEB_THEME_APP_UUID: window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    },
+  };
+}
+
 function PosthogInit() {
   const location = useLocation();
   useEffect(() => {
