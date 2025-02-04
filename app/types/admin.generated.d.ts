@@ -3,6 +3,13 @@
 /* eslint-disable */
 import type * as AdminTypes from './admin.types';
 
+export type MetafieldsDeleteMutationVariables = AdminTypes.Exact<{
+  metafields: Array<AdminTypes.MetafieldIdentifierInput> | AdminTypes.MetafieldIdentifierInput;
+}>;
+
+
+export type MetafieldsDeleteMutation = { metafieldsDelete?: AdminTypes.Maybe<{ deletedMetafields?: AdminTypes.Maybe<Array<AdminTypes.Maybe<Pick<AdminTypes.MetafieldIdentifier, 'key' | 'namespace'>>>>, userErrors: Array<Pick<AdminTypes.UserError, 'field' | 'message'>> }> };
+
 export type CurrentAppInstallationQueryVariables = AdminTypes.Exact<{
   namespace: AdminTypes.Scalars['String']['input'];
   posthogApiKeyKey: AdminTypes.Scalars['String']['input'];
@@ -34,13 +41,6 @@ export type ThemesQuery = { themes?: AdminTypes.Maybe<{ nodes: Array<(
           & { body: Pick<AdminTypes.OnlineStoreThemeFileBodyText, 'content'> }
         )> }> }
     )> }> };
-
-export type MetafieldsDeleteMutationVariables = AdminTypes.Exact<{
-  metafields: Array<AdminTypes.MetafieldIdentifierInput> | AdminTypes.MetafieldIdentifierInput;
-}>;
-
-
-export type MetafieldsDeleteMutation = { metafieldsDelete?: AdminTypes.Maybe<{ deletedMetafields?: AdminTypes.Maybe<Array<AdminTypes.Maybe<Pick<AdminTypes.MetafieldIdentifier, 'key' | 'namespace'>>>>, userErrors: Array<Pick<AdminTypes.UserError, 'field' | 'message'>> }> };
 
 export type MetafieldsSetMutationVariables = AdminTypes.Exact<{
   metafields: Array<AdminTypes.MetafieldsSetInput> | AdminTypes.MetafieldsSetInput;
