@@ -212,7 +212,7 @@ register(async (extensionApi) => {
     );
   }
 
-  const mouseEventsKeys = ['clicked', 'input_blurred', 'input_focused', 'input_changed'] as const;
+  const mouseEventsKeys = ['clicked', 'input_blurred', 'input_changed'] as const;
   for (const key of mouseEventsKeys) {
     analytics.subscribe(
       key,

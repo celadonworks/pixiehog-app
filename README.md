@@ -1,18 +1,18 @@
-<a href="https://pxhog.com/">
-  <img src=".github/pxhog-banner.svg" alt="Pxhog">
+<a href="https://pixiehog.com/">
+  <img src=".github/pixiehog-github-banner.svg" alt="Pixiehog">
 </a>
 
 ---
 
-# **Pxhog - Shopify + PostHog Made Easy**
+# **PixieHog - Shopify + PostHog Made Easy**
 
-Pxhog is a Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, Pxhog helps you set up PostHog the **right way**, ensuring integration with [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) for privacy compliance and using the [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
+PixieHog is a Shopify app designed to simplify and streamline the integration of PostHog analytics for Shopify merchants. Whether you're an experienced developer or a Shopify merchant with little to no coding experience, PixieHog helps you set up PostHog the **right way**, ensuring integration with [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) for privacy compliance and using the [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
 
 ## **Motiviation**
 
 Integrating PostHog into Shopify can be a challenging and error-prone process, even for seasoned developers. It involves navigating multiple technical steps, understanding complex compliance requirements. This complexity often becomes a **friction point** for merchants exploring PostHog for Shopify.
 
-Pxhog solves these problems by providing:
+PixieHog solves these problems by providing:
 - **Simplicity**: A seamless setup process that abstracts away the technical complexity.
 - **Compliance**: Built-in integration with the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) ensures that all tracking respects user consent, sending anonymized data when necessary or detailed data when permitted.
 - **Accessibility**: Makes PostHog accessible to merchants with no coding experience.
@@ -20,7 +20,7 @@ Pxhog solves these problems by providing:
 
 ## **Features**
 
-- **Plug-and-Play Integration**: Install Pxhog on your Shopify store and start tracking with PostHog in minutes.
+- **Plug-and-Play Integration**: Install PixieHog on your Shopify store and start tracking with PostHog in minutes.
 - **Privacy-First Tracking**:
   - Uses [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy) to verify data processing permissions & consent.
   - Sends anonymized data when user consent is pending or declined.
@@ -29,20 +29,20 @@ Pxhog solves these problems by providing:
 - **Full Control via GUI**: A flexible graphical interface allows merchants and developers to fine-tune all PostHog configuration properties and [Web Pixels Standard & DOM events](https://shopify.dev/docs/api/web-pixels-api/standard-events), giving you full control over your setup.
 - **Documentation Hub**: Accompanies a dedicated documentation site with a clear, opinionated guide on how to use PostHog effectively with Shopify.
 
-## **Who Is Pxhog For?**
+## **Who Is PixieHog For?**
 
-Pxhog is for:
+PixieHog is for:
 1. **Shopify Merchants**: 
    - Especially those with little to no technical experience who want actionable insights without the hassle of a complete setup.
 2. **Developers**:
    - Looking to simplify PostHog setup for multiple Shopify stores.
    - Who value compliance and want to avoid reinventing the wheel for every integration.
 
-## **How Pxhog Works**
+## **How PixieHog Works**
 
-1. Install Pxhog on your Shopify store.
+1. Install PixieHog on your Shopify store.
 2. Configure your PostHog API key within the app.
-3. Pxhog automatically:
+3. PixieHog automatically:
    - Adds Web Pixel to the store.
    - Tracks key events (e.g., `add_to_cart`, `checkout_completed`) using [Shopify Web Pixels API](https://shopify.dev/docs/api/web-pixels-api).
    - Respects user consent via the [Shopify Customer Privacy API](https://shopify.dev/docs/api/customer-privacy).
@@ -52,15 +52,15 @@ Pxhog is for:
 
 ## **Community-Driven**
 
-Pxhog is community-driven because:
+PixieHog is community-driven because:
 - **Transparency matters**: Merchants and developers can trust the app to handle data responsibly.
-- **Collaboration drives innovation**: Feature requests and contributions help make Pxhog better for everyone.
+- **Collaboration drives innovation**: Feature requests and contributions help make PixieHog better for everyone.
 
 We welcome contributions from the community, whether you're a developer, a Shopify merchant, or an analytics enthusiast.
 
 ## **License**
 
-Pxhog is released under the [Functional Source License (FSL)](LICENSE.md), which converts to Apache 2.0 after two years.
+PixieHog is released under the [Functional Source License (FSL)](LICENSE.md), which converts to Apache 2.0 after two years.
 
 **TLDR**:  
 - You may use, modify, and commercialize this code to create and host **Custom** or **Unlisted** **Shopify Apps** for private use.  
@@ -68,4 +68,4 @@ Pxhog is released under the [Functional Source License (FSL)](LICENSE.md), which
 
 ---
 
-Simplify Shopify + PostHog analytics with Pxhog and gain actionable insights faster, smarter, and more compliantly. 🚀
+Simplify Shopify + PostHog analytics with PixieHog and gain actionable insights faster, smarter, and more compliantly. 🚀

@@ -5,7 +5,7 @@ import {
   shopifyApp,
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
+import { restResources } from "@shopify/shopify-api/rest/admin/2024-10";
 import prisma from "./db.server";
 import { metafieldsSet } from "./common.server/mutations/metafields-set";
 import { Constant } from "../common/constant";
@@ -31,35 +31,51 @@ const shopify = shopifyApp({
       const defaultWebPixelSettings = WebPixelEventsSettingsSchema.parse({});
       const defaultJSWebConfig = JsWebPosthogConfigSchema.parse({});
       await metafieldsSet(admin.graphql, [
-        {
-          key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'boolean',
-          value: 'false',
-        },
-        {
-          key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'boolean',
-          value: 'true',
-        },
-        {
-          key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'json',
-          value: JSON.stringify(defaultWebPixelSettings)
-        },
-        {
-          key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'json',
-          value: JSON.stringify(defaultJSWebConfig)
-        }
-      ])
+        ...(currentAppInstallation.js_web_posthog_feature_toggle
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'boolean',
+                value: 'false',
+              },
+            ]),
+        ...(currentAppInstallation.web_pixel_feature_toggle
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'boolean',
+                value: 'true',
+              },
+            ]),
+        ...(currentAppInstallation.web_pixel_settings
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify(defaultWebPixelSettings),
+              },
+            ]),
+        ...(currentAppInstallation.js_web_posthog_config
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify(defaultJSWebConfig),
+              },
+            ]),
+      ]);
     },
   },
   future: {

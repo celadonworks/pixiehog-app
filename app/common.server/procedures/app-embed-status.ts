@@ -28,10 +28,14 @@ export async function appEmbedStatus(graphq: AdminGraphqlClient, appEmbedUuid: s
   if (!settingsData) {
     return false;
   }
-  
-  const parsed = JSON5.parse(settingsData) as { current: {blocks: Record<string, { type: string; disabled?: boolean }>} };
+  /**current can be a string for example "DEFAULT" for new theme installations */
+  const { current } = JSON5.parse(settingsData) as { current: {blocks: Record<string, { type: string; disabled?: boolean }>} | string };
 
-  return Object.values(parsed.current.blocks).some((payload) => {
+  if (typeof current === 'string' || current instanceof String) {
+    return false;
+  }
+
+  return Object.values(current.blocks).some((payload) => {
     return payload.type.includes(appEmbedUuid) && !payload.disabled
   })
 }
