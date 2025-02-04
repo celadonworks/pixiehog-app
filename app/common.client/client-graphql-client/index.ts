@@ -1,15 +1,20 @@
-import type { GeneratedQueryTypes } from "app/types/admin.generated";
+import type { GeneratedQueryTypes, GeneratedMutationTypes } from "app/types/admin.generated";
 
-export async function clientGraphQL<T extends keyof GeneratedQueryTypes>(query: T, options: {variables:  GeneratedQueryTypes[T]['variables']}) {
+
+type GeneratedTypes = GeneratedQueryTypes & GeneratedMutationTypes
+
+export async function clientGraphQL<T extends keyof GeneratedTypes>(query: T, options?: {variables:  GeneratedTypes[T]['variables']}) {
   const res = await fetch('shopify:admin/api/2025-01/graphql.json', {
     method: 'POST',
     body: JSON.stringify({
       query: query,
-      variables: options.variables,
+      ...(options?.variables && {
+        variables: options.variables,
+      }),
     }),
   });
 
-  const data = (await res.json()) as {data: GeneratedQueryTypes[T]['return']};
+  const data = (await res.json()) as {data: GeneratedTypes[T]['return']};
   
   return data;
 }
