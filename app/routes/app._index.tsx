@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import type { ActionFunctionArgs } from '@remix-run/node';
 import {
   Page,
   Layout,
@@ -16,6 +16,7 @@ import {
   Button,
 } from '@shopify/polaris';
 import { authenticate } from '../shopify.server';
+import type { ClientLoaderFunctionArgs} from '@remix-run/react';
 import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
 import { Constant } from '../../common/constant/index';
@@ -34,12 +35,11 @@ import type { WebPixelSettingChoice } from './app.web-pixel-settings/interface/s
 import { defaultWebPixelSettings } from './app.web-pixel-settings/default-web-pixel-settings';
 import type { PosthogApiHost} from 'common/dto/posthog-api-host.dto';
 import { PosthogApiHostSchema, posthogApiHostPrimitive } from 'common/dto/posthog-api-host.dto';
-import { appEmbedStatus } from '../common.server/procedures/app-embed-status';
-import { APP_ENV } from '../../common/secret';
 import { urlWithShopParam } from '../../common/utils';
 import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy';
 import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
-
+import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from '../common.client/queries/current-app-installation';
+import { appEmbedStatus as appEmbedStatusClient  } from '../common.client/procedures/app-embed-status'; 
 type StrictOptions = Extract<SelectOption, {label: string}>
 
 const apiHostOptions: StrictOptions[] = [
@@ -49,25 +49,30 @@ const apiHostOptions: StrictOptions[] = [
   { label: "Reverse Proxy", value:"custom"},
 ]
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin, session: { shop } } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
 
-  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
-    admin.graphql,
-    APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID
-  );
-
+export const clientLoader = async ({
+  request,
+  params,
+  serverLoader,
+}: ClientLoaderFunctionArgs) => {
+  // call the server loader
+  //const serverData = await serverLoader();
+  const response = await clientQueryCurrentAppInstallation();
+  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatusClient(window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID)
   const payload = {
-    currentAppInstallation: currentAppInstallation,
+    currentAppInstallation: response.currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
-    js_web_posthog_app_embed_uuid: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
-    shop,
+    js_web_posthog_app_embed_uuid: window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    shop: shopify.config.shop,
     js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
   }
+
   return payload;
 };
 
+export function HydrateFallback() {
+  return <p>Loading Game...</p>;
+}
 export const action = async ({ request }: ActionFunctionArgs) => {
   const payload = await request.json()
 
@@ -186,7 +191,7 @@ export default function Index() {
     js_web_posthog_app_embed_uuid: jsWebPosthogAppEmbedUuid,
     js_web_posthog_app_embed_handle: jsWebPosthogAppEmbedHandle,
     shop,
-  } = useLoaderData<typeof loader>();
+  } = useLoaderData<typeof clientLoader>();
 
   const fetcher = useFetcher();
   const navigate = useNavigate();
