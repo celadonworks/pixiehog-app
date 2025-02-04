@@ -15,20 +15,18 @@ import {
   InlineStack,
   Button,
 } from '@shopify/polaris';
-import { authenticate } from '../shopify.server';
-import type { ClientLoaderFunctionArgs} from '@remix-run/react';
-import { json, useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
-import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
+import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs} from '@remix-run/react';
+import { useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
 import { Constant } from '../../common/constant/index';
-import { metafieldsSet } from '../common.server/mutations/metafields-set';
+import { metafieldsSet as clientMetafieldsSet } from '../common.client/mutations/metafields-set';
+import { metafieldsDelete as clientMetafieldsDelete } from '../common.client/mutations/metafields-delete';
 import type { PosthogApiKey } from '../../common/dto/posthog-api-key.dto';
 import { PosthogApiKeySchema, posthogApiKeyPrimitive } from '../../common/dto/posthog-api-key.dto';
 import { WebPixelFeatureToggleSchema } from '../../common/dto/web-pixel-feature-toggle.dto';
 import type { WebPixelFeatureToggle } from '../../common/dto/web-pixel-feature-toggle.dto';
 import type { JsWebPosthogFeatureToggle } from '../../common/dto/js-web-feature-toggle.dto';
 import { JsWebPosthogFeatureToggleSchema } from '../../common/dto/js-web-feature-toggle.dto';
-import { recalculateWebPixel } from '../common.server/procedures/recalculate-web-pixel';
-import { metafieldsDelete } from '../common.server/mutations/metafields-delete';
+import { recalculateWebPixel as clientRecalculateWebPixel } from '../common.client/procedures/recalculate-web-pixel';
 import FeatureStatusManager from 'common/components/FeatureStatusManager';
 import type { WebPixelEventsSettings } from 'common/dto/web-pixel-events-settings.dto';
 import type { WebPixelSettingChoice } from './app.web-pixel-settings/interface/setting-row.interface';
@@ -39,7 +37,7 @@ import { urlWithShopParam } from '../../common/utils';
 import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy';
 import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
 import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from '../common.client/queries/current-app-installation';
-import { appEmbedStatus as appEmbedStatusClient  } from '../common.client/procedures/app-embed-status'; 
+import { appEmbedStatus as clientAppEmbedStatus  } from '../common.client/procedures/app-embed-status'; 
 type StrictOptions = Extract<SelectOption, {label: string}>
 
 const apiHostOptions: StrictOptions[] = [
@@ -58,7 +56,7 @@ export const clientLoader = async ({
   // call the server loader
   //const serverData = await serverLoader();
   const response = await clientQueryCurrentAppInstallation();
-  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatusClient(window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID)
+  const currentPosthogJsWebAppEmbedStatus = await clientAppEmbedStatus(window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID)
   const payload = {
     currentAppInstallation: response.currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
@@ -70,56 +68,55 @@ export const clientLoader = async ({
   return payload;
 };
 
-export function HydrateFallback() {
-  return <p>Loading Game...</p>;
-}
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const payload = await request.json()
 
-  const { admin } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
-  const appId = currentAppInstallation.id;
+export const clientAction = async ({
+  request,
+  params,
+}: ClientActionFunctionArgs) => {
+
+  const payload = await request.json()
+  const response = await clientQueryCurrentAppInstallation();
+  const appId = response.currentAppInstallation.id;
   const dtoResultPosthogApiKey = PosthogApiKeySchema.safeParse({ posthog_api_key: payload.posthog_api_key } as PosthogApiKey);
   if (!dtoResultPosthogApiKey.success) {
     const message = dtoResultPosthogApiKey.error.flatten().fieldErrors.posthog_api_key?.join(' - ');
-    return json({ ok: false, message: message }, { status: 400 });
+    return { ok: false, message: message };
   }
-
   const dtoResultPosthogApiHost = PosthogApiHostSchema.safeParse({posthog_api_host: payload.posthog_api_host} as PosthogApiHost)
   if(!dtoResultPosthogApiHost.success) {
     const message = dtoResultPosthogApiHost.error.flatten().fieldErrors.posthog_api_host?.join(' - ');
-    return json({ ok: false, message: message }, { status: 400 });
+    return { ok: false, message: message };
   }
 
   const dtoResultDataCollectionStrategy = DataCollectionStrategySchema.safeParse({data_collection_strategy: payload.data_collection_strategy} as DataCollectionStrategy)
   if(!dtoResultDataCollectionStrategy.success) {
     const message = dtoResultDataCollectionStrategy.error.flatten().fieldErrors.data_collection_strategy?.join(' - ');
-    return json({ ok: false, message: message }, { status: 400 });
+    return { ok: false, message: message };
   }
   
   const dtoResultWebPixelFeatureToggle = WebPixelFeatureToggleSchema.safeParse({ web_pixel_feature_toggle: payload.web_pixel_feature_toggle } as WebPixelFeatureToggle);
   if (!dtoResultWebPixelFeatureToggle.success) {
     const message = dtoResultWebPixelFeatureToggle.error.flatten().fieldErrors.web_pixel_feature_toggle?.join(' - ');
-    return json({ ok: false, message: message }, { status: 400 });
+    return { ok: false, message: message };
   }
 
   const dtoResultJsWebPosthogFeatureToggle = JsWebPosthogFeatureToggleSchema.safeParse({ js_web_posthog_feature_toggle: payload.js_web_posthog_feature_toggle } as JsWebPosthogFeatureToggle);
   if (!dtoResultJsWebPosthogFeatureToggle.success) {
     const message = dtoResultJsWebPosthogFeatureToggle.error.flatten().fieldErrors.js_web_posthog_feature_toggle?.join(' - ');
-    return json({ ok: false, message: message }, { status: 400 });
+    return { ok: false, message: message };
   }
   const metafieldsSetData = [
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       type: 'boolean',
       value: dtoResultJsWebPosthogFeatureToggle.data.js_web_posthog_feature_toggle.toString(),
     },
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       type: 'boolean',
       value: dtoResultWebPixelFeatureToggle.data.web_pixel_feature_toggle.toString(),
     },
@@ -134,7 +131,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // posthog api key
   if (dtoResultPosthogApiKey.data.posthog_api_key == '') {
-    await metafieldsDelete(admin.graphql, [
+    await clientMetafieldsDelete([
       {
         key: Constant.METAFIELD_KEY_POSTHOG_API_KEY,
         namespace: Constant.METAFIELD_NAMESPACE,
@@ -153,7 +150,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   // posthog api host
   if (dtoResultPosthogApiHost.data.posthog_api_host == '') {
-    await metafieldsDelete(admin.graphql, [
+    await clientMetafieldsDelete([
       {
         key: Constant.METAFIELD_KEY_POSTHOG_API_HOST,
         namespace: Constant.METAFIELD_NAMESPACE,
@@ -169,20 +166,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       value: dtoResultPosthogApiHost.data.posthog_api_host?.toString(),
     })
   }
-
-
-  await metafieldsSet(admin.graphql, metafieldsSetData);
+  await clientMetafieldsSet(metafieldsSetData);
   
 
-  const responseRecalculate = await recalculateWebPixel(admin.graphql);
+  const responseRecalculate = await clientRecalculateWebPixel();
   const message = (() => {
     if (!responseRecalculate?.status) {
       return 'saved successfully.';
     }
     return `saved & web pixel ${responseRecalculate.status}.`;
   })();
-  return json({ ok: true, message: message }, { status: 200 });
+  return { ok: true, message: message }
 };
+
+export function HydrateFallback() {
+  return <p>Loading Game...</p>;
+}
 
 export default function Index() {
   const {
@@ -248,7 +247,7 @@ export default function Index() {
       isError: true,
       duration: 2000,
     });
-  }, [fetcher, fetcher.data, fetcher.state, navigate]);
+  }, [fetcher.data]);
 
 
   // web pixels
