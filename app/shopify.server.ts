@@ -1,11 +1,12 @@
 import "@shopify/shopify-app-remix/adapters/node";
+import type {
+  ApiVersion} from "@shopify/shopify-app-remix/server";
 import {
-  ApiVersion,
   AppDistribution,
   shopifyApp,
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
-import { restResources } from "@shopify/shopify-api/rest/admin/2024-07";
+import { restResources } from "@shopify/shopify-api/rest/admin/2024-10";
 import prisma from "./db.server";
 import { metafieldsSet } from "./common.server/mutations/metafields-set";
 import { Constant } from "../common/constant";
@@ -13,10 +14,11 @@ import { queryCurrentAppInstallation } from "./common.server/queries/current-app
 import { WebPixelEventsSettingsSchema } from "../common/dto/web-pixel-events-settings.dto";
 import { JsWebPosthogConfigSchema } from "../common/dto/js-web-settings.dto";
 import { APP_ENV } from "../common/secret";
+
 const shopify = shopifyApp({
   apiKey: APP_ENV.SHOPIFY_API_KEY,
   apiSecretKey: APP_ENV.SHOPIFY_API_SECRET || "",
-  apiVersion: ApiVersion.October24,
+  apiVersion: Constant.SHOPIFY_API_VERSION as ApiVersion.October24,
   scopes: process.env.SCOPES?.split(","),
   appUrl: APP_ENV.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
@@ -31,35 +33,51 @@ const shopify = shopifyApp({
       const defaultWebPixelSettings = WebPixelEventsSettingsSchema.parse({});
       const defaultJSWebConfig = JsWebPosthogConfigSchema.parse({});
       await metafieldsSet(admin.graphql, [
-        {
-          key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'boolean',
-          value: 'false',
-        },
-        {
-          key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'boolean',
-          value: 'true',
-        },
-        {
-          key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'json',
-          value: JSON.stringify(defaultWebPixelSettings)
-        },
-        {
-          key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
-          namespace: Constant.METAFIELD_NAMESPACE,
-          ownerId: currentAppInstallation.id,
-          type: 'json',
-          value: JSON.stringify(defaultJSWebConfig)
-        }
-      ])
+        ...(currentAppInstallation.js_web_posthog_feature_toggle
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'boolean',
+                value: 'false',
+              },
+            ]),
+        ...(currentAppInstallation.web_pixel_feature_toggle
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'boolean',
+                value: 'true',
+              },
+            ]),
+        ...(currentAppInstallation.web_pixel_settings
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify(defaultWebPixelSettings),
+              },
+            ]),
+        ...(currentAppInstallation.js_web_posthog_config
+          ? []
+          : [
+              {
+                key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+                namespace: Constant.METAFIELD_NAMESPACE,
+                ownerId: currentAppInstallation.id,
+                type: 'json',
+                value: JSON.stringify(defaultJSWebConfig),
+              },
+            ]),
+      ]);
     },
   },
   future: {
@@ -71,7 +89,6 @@ const shopify = shopifyApp({
 });
 
 export default shopify;
-export const apiVersion = ApiVersion.July24;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
 export const authenticate = shopify.authenticate;
 export const unauthenticated = shopify.unauthenticated;

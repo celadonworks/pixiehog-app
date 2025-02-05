@@ -1,10 +1,9 @@
-import type { AdminGraphqlClient } from '@shopify/shopify-app-remix/server';
 import type { ThemeRole } from '../../types/admin.types';
 import { queryThemes } from '../queries/query-themes';
 import  JSON5 from "json5"
 
-export async function appEmbedStatus(graphq: AdminGraphqlClient, appEmbedUuid: string) {
-  const themes = await queryThemes(graphq, {
+export async function appEmbedStatus(appEmbedUuid: string) {
+  const themes = await queryThemes({
     files: ['config/settings_data.json'],
     first: 1,
     roles: ['MAIN' as ThemeRole],
