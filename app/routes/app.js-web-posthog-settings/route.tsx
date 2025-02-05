@@ -15,7 +15,6 @@ import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggl
 import FeatureStatusManager from '../../../common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
 import { appEmbedStatus as clientAppEmbedStatus } from '../../common.client/procedures/app-embed-status';
-import { APP_ENV } from '../../../common/secret';
 import { SettingType } from '../../../common/interfaces/feature-settings.interface';
 import LoadingSpinner from '../../../common/components/LoadingSpinner';
 
@@ -30,7 +29,7 @@ export const clientLoader = async ({
   const payload = {
     currentAppInstallation: response.currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
-    js_web_posthog_app_embed_uuid: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    js_web_posthog_app_embed_uuid: window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
     shop: shopify.config.shop,
     js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
   }
