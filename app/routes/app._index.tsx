@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ActionFunctionArgs } from '@remix-run/node';
 import {
   Page,
   Layout,
@@ -16,7 +15,7 @@ import {
   Button,
 } from '@shopify/polaris';
 import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs} from '@remix-run/react';
-import { useFetcher, useLoaderData, useNavigate } from '@remix-run/react';
+import { useFetcher, useLoaderData } from '@remix-run/react';
 import { Constant } from '../../common/constant/index';
 import { metafieldsSet as clientMetafieldsSet } from '../common.client/mutations/metafields-set';
 import { metafieldsDelete as clientMetafieldsDelete } from '../common.client/mutations/metafields-delete';
@@ -50,8 +49,6 @@ const apiHostOptions: StrictOptions[] = [
 
 export const clientLoader = async ({
   request,
-  params,
-  serverLoader,
 }: ClientLoaderFunctionArgs) => {
   // call the server loader
   //const serverData = await serverLoader();
@@ -193,7 +190,6 @@ export default function Index() {
   } = useLoaderData<typeof clientLoader>();
 
   const fetcher = useFetcher();
-  const navigate = useNavigate();
   const PosthogApiKeyInitialState = currentAppInstallation.posthog_api_key?.value || '';
   const [PostHogApiKey, setPostHogApiKey] = useState(PosthogApiKeyInitialState);
   const handleApiKeyChange = useCallback((newValue: string) => setPostHogApiKey(newValue), []);
