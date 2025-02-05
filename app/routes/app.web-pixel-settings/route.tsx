@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Page,
   Layout,
@@ -12,29 +11,28 @@ import {
   Box,
   Link
 } from '@shopify/polaris';
-import { authenticate } from '../../shopify.server';
 import { SearchIcon } from '@shopify/polaris-icons';
-import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
+import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from 'app/common.client/queries/current-app-installation';
 import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
+import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs} from '@remix-run/react';
 import { json, useFetcher, useLoaderData } from '@remix-run/react';
 import type { WebPixelSettingChoice } from './interface/setting-row.interface';
 import { WebPixelEventsSettingsSchema } from '../../../common/dto/web-pixel-events-settings.dto';
-import { metafieldsSet } from '../../common.server/mutations/metafields-set';
+import { metafieldsSet as clientMetafieldsSet } from '../../common.client/mutations/metafields-set';
 import { Constant } from '../../../common/constant';
 import type { WebPixelEventsSettings } from '../../../common/dto/web-pixel-events-settings.dto';
-import { recalculateWebPixel } from '../../common.server/procedures/recalculate-web-pixel';
+import { recalculateWebPixel as clientRecalculateWebPixel } from '../../common.client/procedures/recalculate-web-pixel';
 import { defaultWebPixelSettings } from './default-web-pixel-settings';
 import { WebPixelFeatureToggleSchema } from '../../../common/dto/web-pixel-feature-toggle.dto';
 import FeatureStatusManager from 'common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
-  return currentAppInstallation;
+export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
+  const response = await clientQueryCurrentAppInstallation();
+  return response.currentAppInstallation;
 };
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const payload = await request.json()
   const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
@@ -46,30 +44,29 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
   }
   
-  const { admin } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
+  const response = await clientQueryCurrentAppInstallation();
 
   const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
  
-  await metafieldsSet(admin.graphql, 
+  await clientMetafieldsSet(
     [
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       type: 'boolean',
       value: web_pixel_feature_toggle.toString(),
     },
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_EVENTS_SETTINGS,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       value: JSON.stringify(webPixelEventSettings),
       type: 'json',
     },
   ]);
 
-  const responseRecalculate = await recalculateWebPixel(admin.graphql);
+  const responseRecalculate = await clientRecalculateWebPixel();
   if (!responseRecalculate) {
     return json({ ok: true, message: 'Web pixel settings saved' }, { status: 200 });
   }
@@ -78,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
-  const currentAppInstallation = useLoaderData<typeof loader>();
+  const currentAppInstallation = useLoaderData<typeof clientLoader>();
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
