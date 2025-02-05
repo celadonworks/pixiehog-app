@@ -17,6 +17,7 @@ import { detailedDiff } from 'deep-object-diff';
 import { appEmbedStatus as clientAppEmbedStatus } from '../../common.client/procedures/app-embed-status';
 import { APP_ENV } from '../../../common/secret';
 import { SettingType } from '../../../common/interfaces/feature-settings.interface';
+import LoadingSpinner from '../../../common/components/LoadingSpinner';
 
 
 export const clientLoader = async ({
@@ -71,6 +72,10 @@ export const clientAction = async ({
   TODO: handle metafieldsSet error
   */
   return { ok: true, message: 'PostHog Javascript settings saved' }
+}
+
+export function HydrateFallback() {
+  return <LoadingSpinner />
 }
 
 export default function JsWebEvents() {

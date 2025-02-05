@@ -37,6 +37,7 @@ import type { DataCollectionStrategy} from 'common/dto/data-collection-stratergy
 import { DataCollectionStrategySchema} from 'common/dto/data-collection-stratergy';
 import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from '../common.client/queries/current-app-installation';
 import { appEmbedStatus as clientAppEmbedStatus  } from '../common.client/procedures/app-embed-status'; 
+import LoadingSpinner from '../../common/components/LoadingSpinner';
 type StrictOptions = Extract<SelectOption, {label: string}>
 
 const apiHostOptions: StrictOptions[] = [
@@ -177,7 +178,7 @@ export const clientAction = async ({
 };
 
 export function HydrateFallback() {
-  return <p>Loading Game...</p>;
+  return <LoadingSpinner />
 }
 
 export default function Index() {

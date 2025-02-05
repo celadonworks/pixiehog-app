@@ -26,6 +26,7 @@ import { defaultWebPixelSettings } from './default-web-pixel-settings';
 import { WebPixelFeatureToggleSchema } from '../../../common/dto/web-pixel-feature-toggle.dto';
 import FeatureStatusManager from 'common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
+import LoadingSpinner from '../../../common/components/LoadingSpinner';
 
 export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   const response = await clientQueryCurrentAppInstallation();
@@ -73,9 +74,13 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   return json({ ok: true, message: `Web pixel ${responseRecalculate.status}` }, { status: 200 });
 };
 
+export function HydrateFallback() {
+  return <LoadingSpinner />
+}
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
   const currentAppInstallation = useLoaderData<typeof clientLoader>();
+  
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
