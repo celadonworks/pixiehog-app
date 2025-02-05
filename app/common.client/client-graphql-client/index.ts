@@ -1,10 +1,11 @@
 import type { GeneratedQueryTypes, GeneratedMutationTypes } from "app/types/admin.generated";
+import { Constant } from "../../../common/constant";
 
 
 type GeneratedTypes = GeneratedQueryTypes & GeneratedMutationTypes
 
 export async function clientGraphQL<T extends keyof GeneratedTypes>(query: T, options?: {variables:  GeneratedTypes[T]['variables']}) {
-  const res = await fetch('shopify:admin/api/2025-01/graphql.json', {
+  const res = await fetch(`shopify:admin/api/${Constant.SHOPIFY_API_VERSION}/graphql.json`, {
     method: 'POST',
     body: JSON.stringify({
       query: query,
