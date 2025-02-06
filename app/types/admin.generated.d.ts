@@ -10,38 +10,6 @@ export type MetafieldsDeleteMutationVariables = AdminTypes.Exact<{
 
 export type MetafieldsDeleteMutation = { metafieldsDelete?: AdminTypes.Maybe<{ deletedMetafields?: AdminTypes.Maybe<Array<AdminTypes.Maybe<Pick<AdminTypes.MetafieldIdentifier, 'key' | 'namespace'>>>>, userErrors: Array<Pick<AdminTypes.UserError, 'field' | 'message'>> }> };
 
-export type MetafieldsSetMutationVariables = AdminTypes.Exact<{
-  metafields: Array<AdminTypes.MetafieldsSetInput> | AdminTypes.MetafieldsSetInput;
-}>;
-
-
-export type MetafieldsSetMutation = { metafieldsSet?: AdminTypes.Maybe<{ metafields?: AdminTypes.Maybe<Array<Pick<AdminTypes.Metafield, 'key' | 'namespace' | 'value' | 'createdAt' | 'updatedAt'>>>, userErrors: Array<Pick<AdminTypes.MetafieldsSetUserError, 'field' | 'message' | 'code'>> }> };
-
-export type WebPixelCreateMutationVariables = AdminTypes.Exact<{
-  webPixel: AdminTypes.WebPixelInput;
-}>;
-
-
-export type WebPixelCreateMutation = { webPixelCreate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
-
-export type WebPixelDeleteMutationVariables = AdminTypes.Exact<{
-  id: AdminTypes.Scalars['ID']['input'];
-}>;
-
-
-export type WebPixelDeleteMutation = { webPixelDelete?: AdminTypes.Maybe<(
-    Pick<AdminTypes.WebPixelDeletePayload, 'deletedWebPixelId'>
-    & { userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>> }
-  )> };
-
-export type WebPixelUpdateMutationVariables = AdminTypes.Exact<{
-  id: AdminTypes.Scalars['ID']['input'];
-  webPixel: AdminTypes.WebPixelInput;
-}>;
-
-
-export type WebPixelUpdateMutation = { webPixelUpdate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
-
 export type CurrentAppInstallationQueryVariables = AdminTypes.Exact<{
   namespace: AdminTypes.Scalars['String']['input'];
   posthogApiKeyKey: AdminTypes.Scalars['String']['input'];
@@ -74,6 +42,38 @@ export type ThemesQuery = { themes?: AdminTypes.Maybe<{ nodes: Array<(
         )> }> }
     )> }> };
 
+export type MetafieldsSetMutationVariables = AdminTypes.Exact<{
+  metafields: Array<AdminTypes.MetafieldsSetInput> | AdminTypes.MetafieldsSetInput;
+}>;
+
+
+export type MetafieldsSetMutation = { metafieldsSet?: AdminTypes.Maybe<{ metafields?: AdminTypes.Maybe<Array<Pick<AdminTypes.Metafield, 'key' | 'namespace' | 'value' | 'createdAt' | 'updatedAt'>>>, userErrors: Array<Pick<AdminTypes.MetafieldsSetUserError, 'field' | 'message' | 'code'>> }> };
+
+export type WebPixelCreateMutationVariables = AdminTypes.Exact<{
+  webPixel: AdminTypes.WebPixelInput;
+}>;
+
+
+export type WebPixelCreateMutation = { webPixelCreate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
+
+export type WebPixelDeleteMutationVariables = AdminTypes.Exact<{
+  id: AdminTypes.Scalars['ID']['input'];
+}>;
+
+
+export type WebPixelDeleteMutation = { webPixelDelete?: AdminTypes.Maybe<(
+    Pick<AdminTypes.WebPixelDeletePayload, 'deletedWebPixelId'>
+    & { userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>> }
+  )> };
+
+export type WebPixelUpdateMutationVariables = AdminTypes.Exact<{
+  id: AdminTypes.Scalars['ID']['input'];
+  webPixel: AdminTypes.WebPixelInput;
+}>;
+
+
+export type WebPixelUpdateMutation = { webPixelUpdate?: AdminTypes.Maybe<{ userErrors: Array<Pick<AdminTypes.ErrorsWebPixelUserError, 'code' | 'field' | 'message'>>, webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPixel, 'id' | 'settings'>> }> };
+
 export type WebPixelQueryVariables = AdminTypes.Exact<{ [key: string]: never; }>;
 
 
@@ -81,6 +81,7 @@ export type WebPixelQuery = { webPixel?: AdminTypes.Maybe<Pick<AdminTypes.WebPix
 
 interface GeneratedQueryTypes {
   "#graphql\n      query currentAppInstallation(\n        $namespace: String!\n        $posthogApiKeyKey: String!\n        $posthogApiHostKey: String!,\n        $webPixelEventsSettingsKey: String!\n        $webPixelFeatureToggle: String!\n        $jsWebPosthogConfig: String!\n        $jsWebPosthogFeatureToggle: String!\n        $dataCollectionStrategyKey: String!\n      ) {\n        currentAppInstallation {\n          id\n          \n          app {\n            id\n            title\n            handle\n          }\n          posthog_api_key: metafield(namespace: $namespace, key: $posthogApiKeyKey) {\n            key\n            value\n            type\n          }\n          posthog_api_host: metafield(namespace: $namespace, key: $posthogApiHostKey) {\n            key\n            value\n            type\n          }\n          data_collection_strategy: metafield(namespace: $namespace, key: $dataCollectionStrategyKey) {\n            key\n            value\n            type\n          }\n          web_pixel_settings: metafield(namespace: $namespace, key: $webPixelEventsSettingsKey) {\n            key\n            jsonValue\n            type\n          }\n          web_pixel_feature_toggle: metafield(namespace: $namespace, key: $webPixelFeatureToggle) {\n            key\n            jsonValue\n            value\n            type\n          }\n          js_web_posthog_config: metafield(namespace: $namespace, key: $jsWebPosthogConfig) {\n            key\n            jsonValue\n            value\n            type\n          },\n          js_web_posthog_feature_toggle: metafield(namespace: $namespace, key: $jsWebPosthogFeatureToggle) {\n            key\n            jsonValue\n            value\n            type\n          },\n        }\n      }\n    ": {return: CurrentAppInstallationQuery, variables: CurrentAppInstallationQueryVariables},
+  "#graphql\n      query Themes($first: Int!, $files: [String!], $roles: [ThemeRole!]) {\n        themes(first: $first, roles: $roles) {\n          nodes {\n            id\n            name\n            role\n            files(filenames: $files) {\n              nodes {\n                filename\n                body {\n                  ... on OnlineStoreThemeFileBodyText {\n                    content\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": {return: ThemesQuery, variables: ThemesQueryVariables},
   "\n      #graphql\n      query Themes($first: Int!, $files: [String!], $roles: [ThemeRole!]) {\n        themes(first: $first, roles: $roles) {\n          nodes {\n            id\n            name\n            role\n            files(filenames: $files) {\n              nodes {\n                filename\n                body {\n                  ... on OnlineStoreThemeFileBodyText {\n                    content\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ": {return: ThemesQuery, variables: ThemesQueryVariables},
   "#graphql\n        query webPixel {\n          webPixel {\n            id\n            settings\n          }\n        }\n      ": {return: WebPixelQuery, variables: WebPixelQueryVariables},
 }

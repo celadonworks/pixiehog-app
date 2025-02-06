@@ -1,14 +1,26 @@
 import { Links, Meta, Outlet, Scripts, ScrollRestoration, json, useLoaderData, useLocation } from '@remix-run/react';
 import posthog from 'posthog-js';
 import { useEffect, useRef } from 'react';
+import { APP_ENV } from '../common/secret';
 
 export async function loader() {
   return json({
     ENV: {
       POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
       POSTOHG_API_HOST: process.env.POSTOHG_API_HOST,
+      APP_POSTHOG_JS_WEB_THEME_APP_UUID: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
     },
   });
+}
+
+export async function clientLoader() {
+  return {
+    ENV: {
+      POSTHOG_API_KEY: window.ENV.POSTHOG_API_KEY,
+      POSTOHG_API_HOST: window.ENV.POSTOHG_API_HOST,
+      APP_POSTHOG_JS_WEB_THEME_APP_UUID: window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    },
+  };
 }
 
 function PosthogInit() {
@@ -34,8 +46,6 @@ function PosthogInit() {
       return;
     }
     lastUrl.current = url;
-    console.log('registering');
-    console.log(window.origin + location.pathname);
     posthog.capture('$pageview', {
       $current_url: url,
     });

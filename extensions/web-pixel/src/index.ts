@@ -19,7 +19,6 @@ register(async (extensionApi) => {
   if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
-  console.log('v0.14');
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
 
   async function resolveDistinctId() {
