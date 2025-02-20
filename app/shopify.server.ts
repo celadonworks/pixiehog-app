@@ -1,6 +1,7 @@
 import "@shopify/shopify-app-remix/adapters/node";
+import type {
+  ApiVersion} from "@shopify/shopify-app-remix/server";
 import {
-  ApiVersion,
   AppDistribution,
   shopifyApp,
 } from "@shopify/shopify-app-remix/server";
@@ -13,10 +14,11 @@ import { queryCurrentAppInstallation } from "./common.server/queries/current-app
 import { WebPixelEventsSettingsSchema } from "../common/dto/web-pixel-events-settings.dto";
 import { JsWebPosthogConfigSchema } from "../common/dto/js-web-settings.dto";
 import { APP_ENV } from "../common/secret";
+
 const shopify = shopifyApp({
   apiKey: APP_ENV.SHOPIFY_API_KEY,
   apiSecretKey: APP_ENV.SHOPIFY_API_SECRET || "",
-  apiVersion: ApiVersion.October24,
+  apiVersion: Constant.SHOPIFY_API_VERSION as ApiVersion.October24,
   scopes: process.env.SCOPES?.split(","),
   appUrl: APP_ENV.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
@@ -87,7 +89,6 @@ const shopify = shopifyApp({
 });
 
 export default shopify;
-export const apiVersion = ApiVersion.July24;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
 export const authenticate = shopify.authenticate;
 export const unauthenticated = shopify.unauthenticated;

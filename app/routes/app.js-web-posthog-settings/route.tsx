@@ -1,42 +1,44 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
-import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
-import { authenticate } from '../../shopify.server';
-import { SearchIcon } from '@shopify/polaris-icons';
-import { queryCurrentAppInstallation } from 'app/common.server/queries/current-app-installation';
-import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
-import { json, useFetcher, useLoaderData } from '@remix-run/react';
+import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs} from '@remix-run/react';
 import type { JsWebPosthogSettingChoice } from './interface/setting-row.interface';
-import { metafieldsSet } from '../../common.server/mutations/metafields-set';
-import { Constant } from '../../../common/constant';
 import type { JsWebPosthogConfig } from '../../../common/dto/js-web-settings.dto';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
+import { SearchIcon } from '@shopify/polaris-icons';
+import { useFetcher, useLoaderData } from '@remix-run/react';
+import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from 'app/common.client/queries/current-app-installation';
+import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
+import { metafieldsSet as clientMetafieldsSet } from '../../common.client/mutations/metafields-set';
+import { Constant } from '../../../common/constant';
 import { defaultJsWebPosthogSettings } from './default-js-web-settings';
 import { JsWebPosthogConfigSchema } from 'common/dto/js-web-settings.dto';
 import { JsWebPosthogFeatureToggleSchema } from 'common/dto/js-web-feature-toggle.dto';
 import FeatureStatusManager from '../../../common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
-import { appEmbedStatus } from '../../common.server/procedures/app-embed-status';
-import { APP_ENV } from '../../../common/secret';
+import { appEmbedStatus as clientAppEmbedStatus } from '../../common.client/procedures/app-embed-status';
 import { SettingType } from '../../../common/interfaces/feature-settings.interface';
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { admin, session: { shop } } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
-  const currentPosthogJsWebAppEmbedStatus = await appEmbedStatus(
-    admin.graphql,
-    APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID
-  );
+import LoadingSpinner from '../../../common/components/LoadingSpinner';
 
+
+export const clientLoader = async ({
+  request,
+  params,
+}: ClientLoaderFunctionArgs) => {
+
+  const response = await clientQueryCurrentAppInstallation();
+  const currentPosthogJsWebAppEmbedStatus = await clientAppEmbedStatus(window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID);
   const payload = {
-    currentAppInstallation: currentAppInstallation,
+    currentAppInstallation: response.currentAppInstallation,
     js_web_posthog_app_embed_status: currentPosthogJsWebAppEmbedStatus,
-    js_web_posthog_app_embed_uuid: APP_ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
-    shop,
+    js_web_posthog_app_embed_uuid: window.ENV.APP_POSTHOG_JS_WEB_THEME_APP_UUID,
+    shop: shopify.config.shop,
     js_web_posthog_app_embed_handle: Constant.APP_POSTHOG_JS_WEB_THEME_APP_HANDLE,
   }
   return payload;
-};
-
-export const action = async ({ request }: ActionFunctionArgs) => {
+}
+export const clientAction = async ({
+  request,
+  params,
+}: ClientActionFunctionArgs) => {
   const payload = await request.json();
   const dtoResult = JsWebPosthogConfigSchema.merge(JsWebPosthogFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
@@ -45,25 +47,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return `${key}`;
       })
       .join(', ');
-    return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
+    return { ok: false, message: `Invalid keys: ${message}` }
   }
-
-  const { admin } = await authenticate.admin(request);
-  const currentAppInstallation = await queryCurrentAppInstallation(admin.graphql);
-
+  const response = await clientQueryCurrentAppInstallation();
   const { js_web_posthog_feature_toggle, ...jsWebPosthogEventSettings } = dtoResult.data;
-  await metafieldsSet(admin.graphql, [
+  await clientMetafieldsSet([
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       type: 'boolean',
       value: js_web_posthog_feature_toggle.toString(),
     },
     {
       key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
       namespace: Constant.METAFIELD_NAMESPACE,
-      ownerId: currentAppInstallation.id,
+      ownerId: response.currentAppInstallation.id,
       value: JSON.stringify(jsWebPosthogEventSettings),
       type: 'json',
     },
@@ -71,8 +70,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   /*
   TODO: handle metafieldsSet error
   */
-  return json({ ok: true, message: 'PostHog Javascript settings saved' }, { status: 200 });
-};
+  return { ok: true, message: 'PostHog Javascript settings saved' }
+}
+
+export function HydrateFallback() {
+  return <LoadingSpinner />
+}
 
 export default function JsWebEvents() {
   const fetcher = useFetcher();
@@ -82,7 +85,7 @@ export default function JsWebEvents() {
     js_web_posthog_app_embed_uuid: jsWebPosthogAppEmbedUuid,
     js_web_posthog_app_embed_handle: jsWebPosthogAppEmbedHandle,
     shop,
-  } = useLoaderData<typeof loader>();
+  } = useLoaderData<typeof clientLoader>();
   const jsWebPosthogSettingsMetafieldValue = currentAppInstallation?.js_web_posthog_config?.jsonValue as
     | undefined
     | null
