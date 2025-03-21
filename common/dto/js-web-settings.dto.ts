@@ -49,6 +49,8 @@ export const JsWebPosthogConfigSchema = z.object({
     .describe('Determines if users should be opted out of session recording.')
     .default(false),
 
+  disable_web_experiments: z.boolean().describe('Determines if web experiments beta is enabled').default(true),
+
   enable_recording_console_log: z
     .boolean()
     .describe('Determines if console logs should be recorded as part of the session recording. ')
@@ -129,6 +131,8 @@ export const JsWebPosthogConfigSchema = z.object({
     .array(z.string())
     .describe(`List of query params to be automatically captured.`)
     .default([]),
+
+  
 
   // the following will not be implemented
   /**
