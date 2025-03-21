@@ -132,8 +132,6 @@ export const JsWebPosthogConfigSchema = z.object({
     .describe(`List of query params to be automatically captured.`)
     .default([]),
 
-  
-
   // the following will not be implemented
   /**
    * 
