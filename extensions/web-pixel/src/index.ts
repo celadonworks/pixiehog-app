@@ -107,7 +107,7 @@ register(async (extensionApi) => {
     } else if (!windowId) {
       windowId =  uuidv7();
     }
-    const newTimestamp = lastTimestamp === 0 || sessionPastMaximumLength ? timestamp : lastTimestamp;
+    const newTimestamp = timestamp;
     const sessionStartTimestamp = startTimestamp === 0 ? new Date().getTime() : startTimestamp;
 
     await sessionStorage.setItem(POSTHOG_WINDOW_KEY, windowId);
