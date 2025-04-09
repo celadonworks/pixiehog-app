@@ -33,7 +33,7 @@ register(async (extensionApi) => {
     const webPostHogPersisted: {
       distinct_id: string;
     } | null = webPostHogPersistedString ? JSON.parse(webPostHogPersistedString) : null;
-    
+
     if (webPostHogPersisted?.distinct_id) {
       return webPostHogPersisted?.distinct_id;
     }
@@ -135,7 +135,7 @@ register(async (extensionApi) => {
     },
   });
   type ValueOf<T> = T[keyof T];
-  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) { 
+  function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) {
     return async (event: T) => {
       // if event is disabled by merchant skip
       if (settings[event.name as keyof WebPixelSettings] === 'false') {
