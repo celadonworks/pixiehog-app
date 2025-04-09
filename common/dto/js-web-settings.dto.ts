@@ -49,6 +49,8 @@ export const JsWebPosthogConfigSchema = z.object({
     .describe('Determines if users should be opted out of session recording.')
     .default(false),
 
+  disable_web_experiments: z.boolean().describe('Determines if web experiments beta is enabled').default(true),
+
   enable_recording_console_log: z
     .boolean()
     .describe('Determines if console logs should be recorded as part of the session recording. ')
