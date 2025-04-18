@@ -28,9 +28,13 @@ export async function appEmbedStatus(appEmbedUuid: string) {
     return false;
   }
   /**current can be a string for example "DEFAULT" for new theme installations */
-  const { current } = JSON5.parse(settingsData) as { current?: {blocks: Record<string, { type: string; disabled?: boolean }>} | null | string };
+  const { current } = JSON5.parse(settingsData) as { current?: {blocks?: Record<string, { type: string; disabled?: boolean }>} | null | string };
 
   if (typeof current === 'string' || current instanceof String || current == undefined) {
+    return false;
+  }
+
+  if (!current.blocks) {
     return false;
   }
 
