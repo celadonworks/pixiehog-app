@@ -20,7 +20,7 @@ export interface App {
 export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) => {
   const response = await graphql(
     `#graphql
-      query currentAppInstallation(
+      query serverCurrentAppInstallation(
         $namespace: String!
         $posthogApiKeyKey: String!
         $posthogApiHostKey: String!,
@@ -29,6 +29,7 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         $jsWebPosthogConfig: String!
         $jsWebPosthogFeatureToggle: String!
         $dataCollectionStrategyKey: String!
+        $webPixelTrackedEvents: String!
       ) {
         currentAppInstallation {
           id
@@ -64,6 +65,12 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
             value
             type
           }
+          web_pixel_tracked_events: metafield(namespace: $namespace, key: $webPixelTrackedEvents) {
+            key
+            jsonValue
+            value
+            type
+          }
           js_web_posthog_config: metafield(namespace: $namespace, key: $jsWebPosthogConfig) {
             key
             jsonValue
@@ -88,7 +95,8 @@ export const queryCurrentAppInstallation = async (graphql: AdminGraphqlClient) =
         webPixelFeatureToggle: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
         jsWebPosthogConfig: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
         jsWebPosthogFeatureToggle: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
-        dataCollectionStrategyKey: Constant.METAFIELD_KEY_DATA_COLLECTION_STRATEGY
+        dataCollectionStrategyKey: Constant.METAFIELD_KEY_DATA_COLLECTION_STRATEGY,
+        webPixelTrackedEvents: Constant.METAFIELD_KEY_WEB_PIXEL_TRACKED_EVENTS,
       },
     }
   );

@@ -90,17 +90,20 @@ export const WebPixelEventsSettingsSchema = z.object({
     )
     .default(false),
 
-  input_blurred: z.boolean()
+  /** 
+    input_blurred: z.boolean()
     .describe(
       `event logs an instance where an input on a page loses focus.`
     )
     .default(false),
-
+    */
+    /**
   input_changed: z.boolean()
     .describe(
       `event logs an instance where an input value changes.`
     )
     .default(false),
+     */
     /**
      * 
     input_focused: z.boolean()

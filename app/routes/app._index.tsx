@@ -169,6 +169,9 @@ export const clientAction = async ({
 
   const responseRecalculate = await clientRecalculateWebPixel();
   const message = (() => {
+    if (responseRecalculate?.status == 'error') {
+      return responseRecalculate.message;
+    }
     if (!responseRecalculate?.status) {
       return 'saved successfully.';
     }

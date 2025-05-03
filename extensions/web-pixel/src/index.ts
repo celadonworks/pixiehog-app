@@ -1,10 +1,11 @@
-import type { CustomerPrivacyPayload, StandardEvents } from '@shopify/web-pixels-extension';
+import type { CustomerPrivacyPayload, PixelEvents, StandardEvents } from '@shopify/web-pixels-extension';
 import { register } from '@shopify/web-pixels-extension';
 import { PostHog } from 'posthog-node';
 import { v7 as uuidv7 } from 'uuid';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 import { extractEventUUID } from './validate-uuid';
 import { isNumber } from './type-utils';
+import type { WebPixelEventsSettings } from '../../../common/dto/web-pixel-events-settings.dto';
 
 
 register(async (extensionApi) => {
@@ -15,7 +16,42 @@ register(async (extensionApi) => {
     init,
     customerPrivacy,
   } = extensionApi;
-  const settings = extensionApi.settings as WebPixelSettings;
+  const settings = extensionApi.settings as WebPixelSettings & Partial<WebPixelEventsSettings>;
+  
+  const possibleEvents: (keyof PixelEvents)[] = [
+    'cart_viewed',
+    'checkout_address_info_submitted',
+    'checkout_completed',
+    'checkout_contact_info_submitted',
+    'checkout_shipping_info_submitted',
+    'checkout_started',
+    'clicked',
+    'collection_viewed',
+    'form_submitted',
+    'input_blurred',
+    'input_focused',
+    'page_viewed',
+    'payment_info_submitted',
+    'product_added_to_cart',
+    'product_removed_from_cart',
+    'product_variant_viewed',
+    'product_viewed',
+    'search_submitted',
+  ] as const;
+  const settingObjectEvents = possibleEvents.filter((event) => (settings as any)[event] == 'true');
+  const trackedEventsSetting = (() => {
+    try {
+      const events = JSON.parse(settings?.tracked_events || '[]') as string[]
+      if (!Array.isArray(events)) {
+        throw Error('must be array')
+      }
+      return events;
+    } catch (error) {
+        return [] as string[]
+    }
+  })();
+
+  const activeEvents = [...new Set([...settingObjectEvents, ...trackedEventsSetting])];
   const { posthog_api_key, posthog_api_host } = settings;
   if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
@@ -201,7 +237,9 @@ register(async (extensionApi) => {
     'checkout_address_info_submitted',
     'payment_info_submitted',
   ] as const;
-  for (const key of checkoutKeys) {
+
+  const trackedCheckoutKeys = checkoutKeys.filter((key) => activeEvents.includes(key));
+  for (const key of trackedCheckoutKeys) {
     analytics.subscribe(
       key,
       preprocessEvent(async (event, uuid, anonymous) => {
@@ -259,7 +297,8 @@ register(async (extensionApi) => {
   }
 
   const productCartKeys = ['product_added_to_cart', 'product_removed_from_cart'] as const;
-  for (const key of productCartKeys) {
+  const trackedProductCartKeys = productCartKeys.filter((key) => activeEvents.includes(key));
+  for (const key of trackedProductCartKeys ) {
     analytics.subscribe(
       key,
       preprocessEvent(async (event, uuid, anonymous) => {
@@ -300,7 +339,8 @@ register(async (extensionApi) => {
   }
 
   const mouseEventsKeys = ['clicked', 'input_blurred', 'input_changed'] as const;
-  for (const key of mouseEventsKeys) {
+  const trackedMouseEventsKeys = mouseEventsKeys.filter((key) => activeEvents.includes(key));
+  for (const key of trackedMouseEventsKeys) {
     analytics.subscribe(
       key,
       preprocessEvent(async (event, uuid, anonymous) => {
@@ -332,7 +372,7 @@ register(async (extensionApi) => {
     );
   }
 
-  analytics.subscribe(
+  activeEvents.includes('page_viewed') && analytics.subscribe(
     'page_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
@@ -368,7 +408,7 @@ register(async (extensionApi) => {
     })
   );
 
-  analytics.subscribe(
+  activeEvents.includes('collection_viewed') && analytics.subscribe(
     'collection_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
@@ -398,7 +438,7 @@ register(async (extensionApi) => {
     })
   );
 
-  analytics.subscribe(
+  activeEvents.includes('product_viewed') && analytics.subscribe(
     'product_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
@@ -428,7 +468,7 @@ register(async (extensionApi) => {
     })
   );
 
-  analytics.subscribe(
+  activeEvents.includes('cart_viewed') && analytics.subscribe(
     'cart_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
@@ -459,7 +499,7 @@ register(async (extensionApi) => {
     })
   );
 
-  analytics.subscribe(
+  activeEvents.includes('search_submitted') && analytics.subscribe(
     'search_submitted',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
@@ -489,7 +529,7 @@ register(async (extensionApi) => {
     })
   );
 
-  analytics.subscribe(
+  activeEvents.includes('form_submitted') && analytics.subscribe(
     'form_submitted',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();

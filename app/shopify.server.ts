@@ -66,6 +66,21 @@ const shopify = shopifyApp({
                 value: JSON.stringify(defaultWebPixelSettings),
               },
             ]),
+            ...(currentAppInstallation.web_pixel_tracked_events
+              ? []
+              : [
+                  {
+                    key: Constant.METAFIELD_KEY_WEB_PIXEL_TRACKED_EVENTS,
+                    namespace: Constant.METAFIELD_NAMESPACE,
+                    ownerId: currentAppInstallation.id,
+                    type: 'json',
+                    value: JSON.stringify(
+                      Object.entries(defaultWebPixelSettings)
+                      .filter(([key, value]) => value)
+                      .map(([key]) => key)
+                    ),
+                  },
+                ]),
         ...(currentAppInstallation.js_web_posthog_config
           ? []
           : [
