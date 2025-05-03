@@ -231,7 +231,6 @@
             {% endcomment %}
 
             document.addEventListener("visitorConsentCollected", (event) => {
-                console.log({event: event.detail.analyticsAllowed})
                 if(recalculateAnonymous()){
                     window.posthog.reset(true)
                 }

@@ -13,6 +13,7 @@ export const queryCurrentAppInstallation = async () => {
         $jsWebPosthogConfig: String!
         $jsWebPosthogFeatureToggle: String!
         $dataCollectionStrategyKey: String!
+        $webPixelTrackedEvents: String!
       ) {
         currentAppInstallation {
           id
@@ -48,6 +49,12 @@ export const queryCurrentAppInstallation = async () => {
             value
             type
           }
+          web_pixel_tracked_events: metafield(namespace: $namespace, key: $webPixelTrackedEvents) {
+            key
+            jsonValue
+            value
+            type
+          }
           js_web_posthog_config: metafield(namespace: $namespace, key: $jsWebPosthogConfig) {
             key
             jsonValue
@@ -73,6 +80,7 @@ export const queryCurrentAppInstallation = async () => {
         jsWebPosthogConfig: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
         jsWebPosthogFeatureToggle: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_FEATURE_TOGGLE,
         dataCollectionStrategyKey: Constant.METAFIELD_KEY_DATA_COLLECTION_STRATEGY,
+        webPixelTrackedEvents: Constant.METAFIELD_KEY_WEB_PIXEL_TRACKED_EVENTS,
       },
     }
   );

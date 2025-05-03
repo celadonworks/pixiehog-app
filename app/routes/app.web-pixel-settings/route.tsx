@@ -1,20 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Page,
-  Layout,
-  Card,
-  BlockStack,
-  Tabs,
-  Divider,
-  TextField,
-  Icon,
-  Box,
-  Link
-} from '@shopify/polaris';
+import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from 'app/common.client/queries/current-app-installation';
 import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
-import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs} from '@remix-run/react';
+import type { ClientActionFunctionArgs, ClientLoaderFunctionArgs } from '@remix-run/react';
 import { json, useFetcher, useLoaderData } from '@remix-run/react';
 import type { WebPixelSettingChoice } from './interface/setting-row.interface';
 import { WebPixelEventsSettingsSchema } from '../../../common/dto/web-pixel-events-settings.dto';
@@ -27,14 +16,17 @@ import { WebPixelFeatureToggleSchema } from '../../../common/dto/web-pixel-featu
 import FeatureStatusManager from 'common/components/FeatureStatusManager';
 import { detailedDiff } from 'deep-object-diff';
 import LoadingSpinner from '../../../common/components/LoadingSpinner';
+import { queryWebPixel } from '../../common.client/queries/web-pixel';
+import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 
 export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   const response = await clientQueryCurrentAppInstallation();
-  return response.currentAppInstallation;
+  const webPixel = await queryWebPixel() || null;
+  return { currentAppInstallation: response.currentAppInstallation, webPixel };
 };
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
-  const payload = await request.json()
+  const payload = await request.json();
   const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
@@ -44,13 +36,11 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       .join(', ');
     return json({ ok: false, message: `Invalid keys: ${message}` }, { status: 400 });
   }
-  
   const response = await clientQueryCurrentAppInstallation();
 
   const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
- 
-  await clientMetafieldsSet(
-    [
+
+  await clientMetafieldsSet([
     {
       key: Constant.METAFIELD_KEY_WEB_PIXEL_FEATURE_TOGGLE,
       namespace: Constant.METAFIELD_NAMESPACE,
@@ -65,50 +55,70 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       value: JSON.stringify(webPixelEventSettings),
       type: 'json',
     },
+    {
+      key: Constant.METAFIELD_KEY_WEB_PIXEL_TRACKED_EVENTS,
+      namespace: Constant.METAFIELD_NAMESPACE,
+      ownerId: response.currentAppInstallation.id,
+      value: JSON.stringify(Object.entries(webPixelEventSettings).filter(([key, value]) => value).map(([key, value]) => key)),
+      type: 'json',
+    },
   ]);
 
   const responseRecalculate = await clientRecalculateWebPixel();
   if (!responseRecalculate) {
     return json({ ok: true, message: 'Web pixel settings saved' }, { status: 200 });
   }
+  if (responseRecalculate.status == 'error') {
+    return json({ ok: false, message: responseRecalculate.message }, { status: 422 });
+  }
   return json({ ok: true, message: `Web pixel ${responseRecalculate.status}` }, { status: 200 });
 };
 
 export function HydrateFallback() {
-  return <LoadingSpinner />
+  return <LoadingSpinner />;
 }
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
-  const currentAppInstallation = useLoaderData<typeof clientLoader>();
-  
+  const { currentAppInstallation, webPixel } = useLoaderData<typeof clientLoader>();
+  const webPixelActualSettings = (webPixel?.settings as WebPixelSettings | undefined) || null
+  const trackedEvents = (() =>  {
+    try {
+      return JSON.parse(webPixelActualSettings?.tracked_events || '[]') as string[]
+    } catch (error) {
+      return [];
+    }
+  })();
+
+  const metafieldTrackedEvents = currentAppInstallation.web_pixel_tracked_events?.jsonValue as string[] | null | undefined
+  const mergedTrackedEvents = [...new Set([...(Array.isArray(metafieldTrackedEvents) ? metafieldTrackedEvents : []), ...trackedEvents])]
+   
   const webPixelSettingsMetafieldValue = currentAppInstallation?.web_pixel_settings?.jsonValue as
     | undefined
     | null
     | WebPixelEventsSettings;
 
-  const webPixelSettingsInitialState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
-      return {
-        ...entry,
-        value: webPixelSettingsMetafieldValue?.[entry.key] === true,
-      } as WebPixelSettingChoice
 
-    }
+  const webPixelSettingsInitialState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
     
-  );
-  
+    return {
+      ...entry,
+      value: webPixelSettingsMetafieldValue?.[entry.key] === true || (webPixelActualSettings as any)?.[entry.key] === true || mergedTrackedEvents.includes(entry.key),
+    } as WebPixelSettingChoice;
+  });
+
   const [webPixelSettings, setWebPixelSettings] = useState(webPixelSettingsInitialState);
 
-  const handleWebPixelSettingChange = (key: string,value?: string | number | string[]) => {
+  const handleWebPixelSettingChange = (key: string, value?: string | number | string[]) => {
     setWebPixelSettings(
       webPixelSettings.map<WebPixelSettingChoice>((entry) => {
         if (entry.key != key) {
           return entry;
         }
-        if(entry.type === "Checkbox"){
+        if (entry.type === 'Checkbox') {
           return {
             ...entry,
             value: !entry.value,
-          }
+          };
         }
         return {
           ...entry,
@@ -118,7 +128,7 @@ export default function WebPixelEvents() {
     );
   };
 
-  const selectedWebPixelSettings = webPixelSettings.filter((entry) => entry.type === "Checkbox" && entry.value);
+  const selectedWebPixelSettings = webPixelSettings.filter((entry) => entry.type === 'Checkbox' && entry.value);
 
   const [selectedTab, setSelectedTab] = useState(0);
   const handleTabChange = useCallback((selectedTabIndex: number) => setSelectedTab(selectedTabIndex), []);
@@ -160,13 +170,12 @@ export default function WebPixelEvents() {
       return;
     }
 
-
     if (!data.ok) {
       window.shopify.toast.show(data.message, {
         isError: true,
         duration: 2000,
       });
-      return
+      return;
     }
 
     window.shopify.toast.show(data.message, {
@@ -176,12 +185,9 @@ export default function WebPixelEvents() {
     return;
   }, [fetcher, fetcher.data, fetcher.state]);
 
-  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.jsonValue == true
-  const [webPixelFeatureEnabled, setWebPixelFeatureEnabled] = useState(
-    webPixelFeatureToggleInitialState
-  );
+  const webPixelFeatureToggleInitialState = currentAppInstallation.web_pixel_feature_toggle?.jsonValue == true;
+  const [webPixelFeatureEnabled, setWebPixelFeatureEnabled] = useState(webPixelFeatureToggleInitialState);
   const handleWebPixelFeatureEnabledToggle = useCallback(() => setWebPixelFeatureEnabled((value) => !value), []);
-
 
   const submitSettings = () => {
     fetcher.submit(
@@ -195,21 +201,20 @@ export default function WebPixelEvents() {
       },
       {
         method: 'POST',
-        encType: "application/json"
+        encType: 'application/json',
       }
     );
   };
 
   const dirty = useMemo(() => {
-   
     const diff = detailedDiff(webPixelSettingsInitialState || {}, webPixelSettings);
     if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
       return true;
     }
-    return webPixelFeatureEnabled != webPixelFeatureToggleInitialState
+    return webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
   }, [webPixelSettings, webPixelFeatureEnabled, webPixelFeatureToggleInitialState, webPixelSettingsInitialState]);
 
-  const allEventsDisabled = webPixelSettings.every((entry) => !entry.value)
+  const allEventsDisabled = webPixelSettings.every((entry) => !entry.value);
   return (
     <Page
       title="Web Pixel Settings"
@@ -224,36 +229,43 @@ export default function WebPixelEvents() {
         <Layout.Section>
           <Card>
             <BlockStack gap="500">
-
               <FeatureStatusManager
                 featureEnabled={webPixelFeatureEnabled}
                 handleFeatureEnabledToggle={handleWebPixelFeatureEnabledToggle}
-                dirty= {dirty}
-                bannerTitle='The following requirements need to be meet to finalize the Web Pixel setup:'
-                bannerTone='warning'
+                dirty={dirty}
+                bannerTitle="The following requirements need to be meet to finalize the Web Pixel setup:"
+                bannerTone="warning"
                 customActions={[
                   {
-                    trigger : !currentAppInstallation.posthog_api_key?.value,
-                    badgeText:"Action required",
-                    badgeTone: "critical",
-                    badgeToneOnDirty: "attention",
-                    bannerMessage: <div>Setup Posthog project API key <Link url="/app">Here</Link>.</div>
+                    trigger: !currentAppInstallation.posthog_api_key?.value,
+                    badgeText: 'Action required',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
+                    bannerMessage: (
+                      <div>
+                        Setup Posthog project API key <Link url="/app">Here</Link>.
+                      </div>
+                    ),
                   },
                   {
-                    trigger : !currentAppInstallation.posthog_api_host?.value,
-                    badgeText:"Action required",
-                    badgeTone: "critical",
-                    badgeToneOnDirty: "attention",
-                    bannerMessage: <div>Setup Posthog API host <Link url="/app">Here</Link>.</div>
+                    trigger: !currentAppInstallation.posthog_api_host?.value,
+                    badgeText: 'Action required',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
+                    bannerMessage: (
+                      <div>
+                        Setup Posthog API host <Link url="/app">Here</Link>.
+                      </div>
+                    ),
                   },
                   {
-                    trigger : allEventsDisabled,
-                    badgeText:"Action required",
-                    badgeTone: "critical",
-                    badgeToneOnDirty: "attention",
-                    bannerMessage: "Select at least 1 event from the list below."
-                  }
-              ]}
+                    trigger: allEventsDisabled,
+                    badgeText: 'Action required',
+                    badgeTone: 'critical',
+                    badgeToneOnDirty: 'attention',
+                    bannerMessage: 'Select at least 1 event from the list below.',
+                  },
+                ]}
               />
               <Divider />
               <Tabs disabled={!webPixelFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
@@ -268,7 +280,7 @@ export default function WebPixelEvents() {
                     prefix={<Icon source={SearchIcon}></Icon>}
                   />
                   <MultiChoiceSelector
-                    settings={tabs[selectedTab].id === 'all' ? webPixelSettings  : selectedWebPixelSettings}
+                    settings={tabs[selectedTab].id === 'all' ? webPixelSettings : selectedWebPixelSettings}
                     onChange={handleWebPixelSettingChange}
                     featureEnabled={webPixelFeatureEnabled}
                   ></MultiChoiceSelector>

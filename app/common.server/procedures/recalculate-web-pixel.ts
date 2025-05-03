@@ -57,7 +57,7 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
   const { posthog_api_key, ...eventsSettings } = dtoResult.data;
   
   const eventsSettingsValues = Object.values(eventsSettings);
-  const allEventsDisabled = eventsSettingsValues.every((value) => value === false);
+  const allEventsDisabled = eventsSettingsValues.every((value) => value == 'false');
   if (allEventsDisabled) {
     // delete web pixel
     if (!shopifyWebPixel?.id) {
@@ -72,7 +72,7 @@ export async function recalculateWebPixel(graphq: AdminGraphqlClient): Promise<{
 
   const convertedDtoResultData = Object.fromEntries(
     Object.entries(dtoResult.data).map(([key, value]) => [key, String(value)])
-  );
+  ) as unknown as WebPixelSettings;
   if (shopifyWebPixel?.id) {
     // we already have a web pixel
     // update settings
