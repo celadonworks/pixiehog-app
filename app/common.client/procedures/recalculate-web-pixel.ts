@@ -6,14 +6,22 @@ import { webPixelDelete } from '../mutations/web-pixel-delete';
 import { webPixelUpdate } from '../mutations/web-pixel-update';
 import { webPixelCreate } from '../mutations/web-pixel-create';
 import type { DataCollectionStrategy } from '../../../common/dto/data-collection-stratergy';
-export async function recalculateWebPixel(): Promise<{
-  status: 'disconnected' | 'connected' | 'updated'
-} | { status: 'error', message: string} | null> {
+import posthog from 'posthog-js';
+export async function recalculateWebPixel(): Promise<
+  | {
+      status: 'disconnected' | 'connected' | 'updated';
+    }
+  | { status: 'error'; message: string }
+  | null
+> {
   const response = await clientQueryCurrentAppInstallation();
   const shopifyWebPixel = await queryWebPixel();
   const posthogApiKey = response.currentAppInstallation.posthog_api_key?.value;
   const posthogApihost = response.currentAppInstallation.posthog_api_host?.value;
-  const trackedEvents = response.currentAppInstallation.web_pixel_tracked_events?.jsonValue as string[] | null | undefined;
+  const trackedEvents = response.currentAppInstallation.web_pixel_tracked_events?.jsonValue as
+    | string[]
+    | null
+    | undefined;
   type ValueOf<T> = T[keyof T];
   const dataCollectionStrategyKey = response.currentAppInstallation.data_collection_strategy
     ?.value as ValueOf<DataCollectionStrategy>;
@@ -55,7 +63,6 @@ export async function recalculateWebPixel(): Promise<{
     return { status: 'disconnected' };
   }
 
-;
   const allEventsDisabled = (trackedEvents || []).length === 0;
   if (allEventsDisabled) {
     // delete web pixel
@@ -63,7 +70,11 @@ export async function recalculateWebPixel(): Promise<{
       // no pixel already nothing to do
       return null;
     }
-    await webPixelDelete(shopifyWebPixel?.id);
+    const response = await webPixelDelete(shopifyWebPixel?.id);
+    if (response.data.webPixelDelete?.userErrors?.length) {
+      posthog.captureException(new Error('webPixelDeletefailed', { cause: response.data.webPixelDelete?.userErrors }), response.data);
+      return { status: 'error', message: response.data.webPixelDelete?.userErrors[0].message };
+    }
     return { status: 'disconnected' };
   }
   // if we have at least one event active and post_hog_api_key
@@ -78,7 +89,8 @@ export async function recalculateWebPixel(): Promise<{
 
     const response = await webPixelUpdate(shopifyWebPixel.id, convertedDtoResultData);
     if (response.data.webPixelUpdate?.userErrors?.length) {
-      return { status: 'error',  message:  response.data.webPixelUpdate?.userErrors[0].message};
+      posthog.captureException(new Error('webPixelUpdate failed', { cause: response.data.webPixelUpdate?.userErrors }), response.data);
+      return { status: 'error', message: response.data.webPixelUpdate?.userErrors[0].message };
     }
     return { status: 'updated' };
   }
@@ -86,7 +98,8 @@ export async function recalculateWebPixel(): Promise<{
   // create web pixel
   const responseCreate = await webPixelCreate(convertedDtoResultData);
   if (responseCreate.data.webPixelCreate?.userErrors?.length) {
-    return { status: 'error',  message:  responseCreate.data.webPixelCreate?.userErrors[0].message};
+    posthog.captureException(new Error('webPixelCreate failed', { cause: responseCreate.data.webPixelCreate?.userErrors }), responseCreate.data);
+    return { status: 'error', message: responseCreate.data.webPixelCreate?.userErrors[0].message };
   }
   return { status: 'connected' };
 }
