@@ -1,7 +1,7 @@
-import { serialize } from 'v8';
 import type { ThemeRole } from '../../types/admin.types';
 import { queryThemes } from '../queries/query-themes';
 import  JSON5 from "json5"
+import { serializeError } from 'serialize-error';
 
 export async function appEmbedStatus(appEmbedUuid: string) {
   const themes = await queryThemes({
@@ -45,7 +45,7 @@ export async function appEmbedStatus(appEmbedUuid: string) {
     })
   } catch (error) {
     throw new Error('failed to resolve app embed status', {
-      cause: serialize({
+      cause: serializeError({
         error,
         settingsData,
       }),
