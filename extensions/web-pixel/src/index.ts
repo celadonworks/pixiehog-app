@@ -1,12 +1,14 @@
 import type { CustomerPrivacyPayload, PixelEvents, StandardEvents } from '@shopify/web-pixels-extension';
 import { register } from '@shopify/web-pixels-extension';
-import { PostHog } from 'posthog-node';
 import { v7 as uuidv7 } from 'uuid';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
 import { extractEventUUID } from './validate-uuid';
 import { isNumber } from './type-utils';
 import type { WebPixelEventsSettings } from '../../../common/dto/web-pixel-events-settings.dto';
-
+import { calculateCampaignParams } from './campaign-params';
+import { UAParser } from 'ua-parser-js';
+import { getSearchEngine } from './utils';
+import { PixieHogPostHog } from './pixiehog-posthog';
 
 register(async (extensionApi) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -56,6 +58,7 @@ register(async (extensionApi) => {
   if (!posthog_api_key) {
     throw new Error('ph_project_api_key is undefined');
   }
+  const { firstTouchCampaignParams, lastTouchCampaignParams } = calculateCampaignParams(init.context.document.location.href)
   let customerPrivacyStatus: CustomerPrivacyPayload['customerPrivacy'] = init.customerPrivacy;
   const POSTHOG_WINDOW_KEY = `ph_${posthog_api_key}_window_id`;
   const POSTHOG_KEY = `ph_${posthog_api_key}_posthog`;
@@ -159,7 +162,7 @@ register(async (extensionApi) => {
     const distinct_id = uuidv7();
     await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
   }
-  const posthog = new PostHog(posthog_api_key, {
+  const posthog = new PixieHogPostHog(posthog_api_key, {
     fetch: fetch,
     host: posthog_api_host,
     persistence: 'memory',
@@ -217,8 +220,54 @@ register(async (extensionApi) => {
   customerPrivacy.subscribe('visitorConsentCollected', (event) => {
     customerPrivacyStatus = event.customerPrivacy;
   });
-
+  const userAgent = (() => {
+    try {
+      return UAParser(init.context.navigator.userAgent);
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  })();
+  const currentURLObject = (() => {
+    try {
+      return new URL(init.context.document.location.href);
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  })();
+  const referringURLObject = (() => {
+    try {
+      if (!init?.context?.document?.referrer) {
+        return null
+      }
+      return new URL(init.context.document.referrer);
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+  })();
+  //https://posthog.com/docs/data/events;
   const initProperties = {
+    $os: userAgent?.os.name || null,
+    $os_version: userAgent?.os.version || null,
+    $browser: userAgent?.browser.name || null,
+    $browser_version: userAgent?.browser.version ? String(userAgent.browser.version) : null,
+    $device_type: userAgent?.device.type,
+    $current_url: init.context.document.location.href,
+    $host: currentURLObject?.host || null,
+    $pathname: currentURLObject?.pathname || null,
+    $screen_height: init.context.window.screen.height,
+    $screen_width: init.context.window.screen.width,
+    $viewport_height: init.context.window.innerHeight,
+    $viewport_width: init.context.window.innerWidth,
+    $lib: 'pixiehog',
+    $lib_version: process?.env?.npm_package_version || '0.0.1',
+    $search_engine: getSearchEngine(init?.context?.document?.referrer || null),
+    $referrer: init.context.document.referrer,
+    $referring_domain: referringURLObject?.host || null,
+    /** how to calculate active_feature_flags */
+    //$active_feature_flags: null,
     shop: init.data.shop,
     ...(init.data.customer && {
       customer: init.data.customer,
@@ -227,6 +276,33 @@ register(async (extensionApi) => {
     ...(init.data.cart && {
       cart: init.data.cart,
     }),
+    //https://posthog.com/docs/product-analytics/person-properties
+    $set: {
+      ...lastTouchCampaignParams,
+      ...init.data.customer,
+      $browser: userAgent?.browser.name || null,
+      $browser_version: userAgent?.browser.version || null,
+      $os: userAgent?.os.name || null,
+      $os_version: userAgent?.os.version || null,
+      $device_type: userAgent?.device.type,
+      $current_url: init.context.document.location.href,
+      $pathname: currentURLObject?.pathname || null,
+      $referrer: init.context.document.referrer,
+      $referring_domain: referringURLObject?.host || null,
+    },
+    $set_once: {
+      ...firstTouchCampaignParams,
+      $initial_browser: userAgent?.browser.name || null,
+      $initial_browser_version: userAgent?.browser.version || null,
+      $initial_os: userAgent?.os.name || null,
+      $initial_os_version: userAgent?.os.version || null,
+      $initial_device_type: userAgent?.device.type,
+      $initial_current_url: init.context.document.location.href,
+      $initial_pathname: currentURLObject?.pathname || null,
+      $initial_referrer: init.context.document.referrer,
+      $initial_referring_domain: referringURLObject?.host || null,
+    },
+    ...lastTouchCampaignParams,
   } as const;
 
   const checkoutKeys = [
