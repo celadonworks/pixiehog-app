@@ -261,8 +261,6 @@ register(async (extensionApi) => {
     $screen_width: init.context.window.screen.width,
     $viewport_height: init.context.window.innerHeight,
     $viewport_width: init.context.window.innerWidth,
-    $lib: 'pixiehog',
-    $lib_version: process?.env?.npm_package_version || '0.0.1',
     $search_engine: getSearchEngine(init?.context?.document?.referrer || null),
     $referrer: init.context.document.referrer,
     $referring_domain: referringURLObject?.host || null,
