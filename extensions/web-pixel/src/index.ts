@@ -36,7 +36,6 @@ register(async (extensionApi) => {
     'payment_info_submitted',
     'product_added_to_cart',
     'product_removed_from_cart',
-    'product_variant_viewed',
     'product_viewed',
     'search_submitted',
   ] as const;
