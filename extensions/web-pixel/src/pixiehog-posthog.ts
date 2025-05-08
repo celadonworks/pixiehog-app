@@ -6,7 +6,7 @@ export class PixieHogPostHog extends PostHog {
     return 'pixiehog';
   }
   getLibraryVersion(): string {
-    return '1.0.1';
+    return '1.0.3';
   }
   getCustomUserAgent(): string {
     return `${super.getLibraryId()}/${super.getLibraryVersion()}`
