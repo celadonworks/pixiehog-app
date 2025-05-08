@@ -80,7 +80,7 @@ interface ProductAddedOrRemovedEvent {
   image_url: string | null;
 }
 
-export function productRemovedSpec(
+export function productRemovedOrAddedSpec(
   shop: Shop,
   event: StandardEvents['product_added_to_cart'] | StandardEvents['product_removed_from_cart']
 ): ProductAddedOrRemovedEvent {

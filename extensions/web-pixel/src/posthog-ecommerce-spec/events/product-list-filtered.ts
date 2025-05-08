@@ -32,55 +32,55 @@ interface Product {
    * Product ID displayed on the list
    * @example '17584e91ae1abff0d355e3f5'
    */
-  product_id: string;
+  product_id: string | null;
 
   /**
    * SKU (Stock Keeping Unit) of the product
    * @example '92849-15'
    */
-  sku: string;
+  sku: string | null;
 
   /**
    * Product category
    * @example 'merch'
    */
-  category: string;
+  category: string | null;
 
   /**
    * Name of the product
    * @example 'Copy/pasta t-shirt'
    */
-  name: string;
+  name: string | null;
 
   /**
    * Brand associated with the product
    * @example 'PostHog'
    */
-  brand?: string;
+  brand?: string | null;
 
   /**
    * Variant of the product
    * @example 'dark'
    */
-  variant?: string;
+  variant?: string | null;
 
   /**
    * Price ($) of the product
    * @example 30
    */
-  price: number;
+  price: number | null;
 
   /**
    * Quantity of a product
    * @example 1
    */
-  quantity?: number;
+  quantity?: number | null;
 
   /**
    * Coupon code for the product
    * @example 'MAY_DEALS_3'
    */
-  coupon?: string;
+  coupon?: string | null;
 
   /**
    * Position in the product list
@@ -92,13 +92,13 @@ interface Product {
    * URL of the product page
    * @example 'https://posthog.com/merch?product=copy-pasta-t-shirt'
    */
-  url: string;
+  url: string | null;
 
   /**
    * Image URL of the product
    * @example 'https://cdn.shopify.com/s/files/1/0452/0935/4401/files/DSC07153_813x1219_crop_center.jpg'
    */
-  image_url: string;
+  image_url: string | null;
 }
 
 interface ProductListFilteredEvent {
@@ -106,13 +106,13 @@ interface ProductListFilteredEvent {
    * Product list being viewed
    * @example 'list1'
    */
-  list_id: string;
+  list_id: string | null;
 
   /**
    * Product category being viewed
    * @example 'apparel'
    */
-  category?: string;
+  category: string | null;
 
   /**
    * Product filters being used
@@ -132,14 +132,38 @@ interface ProductListFilteredEvent {
    */
   products: Product[];
 }
-export function searchSubmittedSpec(
+export function productListFilteredSpec(
   shop: Shop,
   event: StandardEvents['search_submitted']
 ): ProductListFilteredEvent {
-  //https://posthog.com/docs/data/event-spec/ecommerce-events#product-viewed
+  //https://posthog.com/docs/data/event-spec/ecommerce-events#product-list-filtered
   const searchResult = event.data.searchResult;
 
   return {
-   query: searchResult.query,
+    list_id: null,
+    category: null,
+    filters: [
+      {
+        type: 'q',
+        value: searchResult.query
+      },
+    ],
+    sorts: [],
+    products: searchResult.productVariants.map((productVariant, index) => {
+      return {
+        category: null,
+        brand: null,
+        coupon: null,
+        name: productVariant.product.title || null,
+        image_url: productVariant.image?.src || null,
+        position: index + 1,
+        price: productVariant.price.amount,
+        product_id: productVariant.id,
+        sku: productVariant.sku || null,
+        url: productVariant.product.url || null,
+        quantity: 1,
+        variant: productVariant.title || null
+      }
+    })
   };
 }

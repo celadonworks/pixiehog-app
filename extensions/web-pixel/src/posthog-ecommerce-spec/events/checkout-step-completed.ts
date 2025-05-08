@@ -1,5 +1,5 @@
 import type { Shop, StandardEvents } from '@shopify/web-pixels-extension';
-import { checkoutSequencing } from './utils/checkout-sequencing';
+import { checkoutSequencing } from '../utils/checkout-sequencing';
 interface CheckoutStepCompletedEvent {
   /**
    * Checkout transaction ID
