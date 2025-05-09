@@ -231,6 +231,9 @@ export default function Index() {
   );
 
   useEffect(() => {
+    if (fetcher.state == 'loading' || fetcher.state == 'submitting') {
+      return;
+    }
     const data = fetcher.data as { ok: false; message: string } | { ok: true; message: string } | null;
     if (!data) {
       return;

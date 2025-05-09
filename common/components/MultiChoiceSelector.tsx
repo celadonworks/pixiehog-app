@@ -9,11 +9,22 @@ export interface MultiChoiceSelectorProps {
   settings: Settings[];
   onChange: (key: string, value?: string | number | string[]) => void;
   featureEnabled: boolean;
+
+  keyOverride?: Record<string, React.JSX.Element>
 }
 
 
 
-export default function MultiChoiceSelector({ settings, onChange, featureEnabled }: MultiChoiceSelectorProps) {
+export default function MultiChoiceSelector({ settings, onChange, featureEnabled, keyOverride }: MultiChoiceSelectorProps) {
+  const resolveKeyOveride = (key: string) => {
+    if (!keyOverride) {
+      return key
+    }
+    if (!keyOverride[key]) {
+      return key;
+    }
+    return keyOverride[key];
+  }
   return (
     <Card>
       {Object.entries(settings).length ? (
@@ -26,7 +37,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                   <InlineGrid gap="1600" columns={2} key={entry.key} alignItems="center">
                     <BlockStack gap="100">
                       <Text tone={featureEnabled ? 'base' : 'disabled'} variant="headingSm" as="h2">
-                      {entry.key}
+                      {resolveKeyOveride(entry.key)}
                       </Text>
                       <Text variant="bodyMd" tone={featureEnabled ? 'base' : 'disabled'} as="p">
                         {entry.description}
@@ -37,7 +48,7 @@ export default function MultiChoiceSelector({ settings, onChange, featureEnabled
                         entry.type === "Checkbox" && (
                         <Checkbox 
                           disabled={!featureEnabled}
-                          label={<code>{entry.key}</code>}
+                          label={<code>{resolveKeyOveride(entry.key)}</code>}
                           checked={entry.value as boolean}
                           id={entry.key}
                           key={entry.key}

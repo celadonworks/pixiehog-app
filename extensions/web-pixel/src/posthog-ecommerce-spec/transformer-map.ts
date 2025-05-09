@@ -7,6 +7,7 @@ import { productRemovedOrAddedSpec } from './events/product-added-removed';
 import { productListFilteredSpec } from './events/product-list-filtered';
 import { productListViewedSpec } from './events/product-list-viewed';
 import { productViewedSpec } from './events/product-viewed';
+import { orderCompletedSpec } from './events/order_completed';
 
 export const webPixelToPostHogEcommerceSpecTransformerMap: {[key: string]: ((shop: Shop, event: any) => Record<string, any>) | undefined} = {
   search_submitted: productListFilteredSpec,
@@ -19,5 +20,6 @@ export const webPixelToPostHogEcommerceSpecTransformerMap: {[key: string]: ((sho
   checkout_address_info_submitted: checkoutStepCompletedSpec,
   checkout_contact_info_submitted: checkoutStepCompletedSpec,
   checkout_shipping_info_submitted: checkoutStepCompletedSpec,
-  checkout_completed: paymentInfoEnteredSpec,
+  payment_info_submitted: paymentInfoEnteredSpec,
+  checkout_completed: orderCompletedSpec,
 }

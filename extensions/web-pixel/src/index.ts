@@ -320,15 +320,19 @@ register(async (extensionApi) => {
   }
 
   const resolveEventEcommerceSpecBody = (event: PixelEvents[keyof PixelEvents]) => {
+    console.log({posthogEcommerceSpecEnabled, event})
     if (!posthogEcommerceSpecEnabled) {
       return {};
     }
     const transformer = webPixelToPostHogEcommerceSpecTransformerMap[event.name]
+    console.log({transformer})
     if (!transformer) {
       return {}
     }
+    const transformed = transformer(init.data.shop, event)
+    console.log({transformed})
 
-    return transformer(init.data.shop, event);
+    return transformed;
 
   }
 

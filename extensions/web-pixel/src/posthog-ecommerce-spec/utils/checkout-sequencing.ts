@@ -1,1 +1,1 @@
-export const checkoutSequencing = ['checkout_contact_info_submitted', 'checkout_address_info_submitted', 'checkout_shipping_info_submitted', 'checkout_completed'] as const;
+export const checkoutSequencing = ['checkout_contact_info_submitted', 'checkout_address_info_submitted', 'checkout_shipping_info_submitted', 'payment_info_submitted'] as const;

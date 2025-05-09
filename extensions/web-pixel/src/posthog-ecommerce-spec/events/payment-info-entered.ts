@@ -33,7 +33,7 @@ interface PaymentInfoEnteredEvent {
 }
 export function paymentInfoEnteredSpec(
   shop: Shop,
-  event: StandardEvents['checkout_completed']
+  event: StandardEvents['payment_info_submitted']
 ): PaymentInfoEnteredEvent {
   //https://posthog.com/docs/data/event-spec/ecommerce-events#payment-info-entered
   const checkout = event.data.checkout;

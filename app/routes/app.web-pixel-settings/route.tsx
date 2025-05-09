@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link } from '@shopify/polaris';
+import { Page, Layout, Card, BlockStack, Tabs, Divider, TextField, Icon, Box, Link, InlineStack, Checkbox } from '@shopify/polaris';
 import { SearchIcon } from '@shopify/polaris-icons';
 import { queryCurrentAppInstallation as clientQueryCurrentAppInstallation } from 'app/common.client/queries/current-app-installation';
 import MultiChoiceSelector from '../../../common/components/MultiChoiceSelector';
@@ -18,16 +18,21 @@ import { detailedDiff } from 'deep-object-diff';
 import LoadingSpinner from '../../../common/components/LoadingSpinner';
 import { queryWebPixel } from '../../common.client/queries/web-pixel';
 import type { WebPixelSettings } from '../../../common/dto/web-pixel-settings.dto';
+import { WebPixelPostHogEcommerceSpecSchema } from '../../../common/dto/web-pixel-posthog-ecommerce-spec';
+import { posthogSvg } from './posthog.svg';
+import { urlWithShopParam } from '../../../common/utils';
+import { posthogKeys, shopifyKeys } from './keyoverrides';
 
 export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   const response = await clientQueryCurrentAppInstallation();
   const webPixel = await queryWebPixel() || null;
-  return { currentAppInstallation: response.currentAppInstallation, webPixel };
+  
+  return { currentAppInstallation: response.currentAppInstallation, webPixel, shop: shopify.config.shop, };
 };
 
 export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   const payload = await request.json();
-  const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).safeParse(payload);
+  const dtoResult = WebPixelEventsSettingsSchema.merge(WebPixelFeatureToggleSchema).merge(WebPixelPostHogEcommerceSpecSchema).safeParse(payload);
   if (!dtoResult.success) {
     const message = Object.entries(dtoResult.error.flatten().fieldErrors)
       .map(([key, errors]) => {
@@ -38,7 +43,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
   }
   const response = await clientQueryCurrentAppInstallation();
 
-  const { web_pixel_feature_toggle, ...webPixelEventSettings } = dtoResult.data;
+  const { web_pixel_feature_toggle, posthog_ecommerce_spec, ...webPixelEventSettings } = dtoResult.data;
 
   await clientMetafieldsSet([
     {
@@ -62,6 +67,13 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       value: JSON.stringify(Object.entries(webPixelEventSettings).filter(([key, value]) => value).map(([key, value]) => key)),
       type: 'json',
     },
+    {
+      key: Constant.METAFIELD_KEY_POSTHOG_ECOMMERCE_SPEC,
+      namespace: Constant.METAFIELD_NAMESPACE,
+      ownerId: response.currentAppInstallation.id,
+      value: JSON.stringify(posthog_ecommerce_spec),
+      type: 'json',
+    },
   ]);
 
   const responseRecalculate = await clientRecalculateWebPixel();
@@ -79,7 +91,7 @@ export function HydrateFallback() {
 }
 export default function WebPixelEvents() {
   const fetcher = useFetcher();
-  const { currentAppInstallation, webPixel } = useLoaderData<typeof clientLoader>();
+  const { currentAppInstallation, webPixel, shop } = useLoaderData<typeof clientLoader>();
   const webPixelActualSettings = (webPixel?.settings as WebPixelSettings | undefined) || null
   const trackedEvents = (() =>  {
     try {
@@ -96,6 +108,8 @@ export default function WebPixelEvents() {
     | undefined
     | null
     | WebPixelEventsSettings;
+
+  const postHogEcommerceSpecMetafiledValue = currentAppInstallation.web_pixel_posthog_ecommerce_spec?.jsonValue == true;
 
 
   const webPixelSettingsInitialState = defaultWebPixelSettings.map<WebPixelSettingChoice>((entry) => {
@@ -164,7 +178,16 @@ export default function WebPixelEvents() {
     [webPixelSettings]
   );
 
+  const [checkedEcommerceSpec, setCheckedEcommerceSpec] = useState(!!postHogEcommerceSpecMetafiledValue);
+  const handleChangeEcommerceSpec = useCallback(
+    (newChecked: boolean) => setCheckedEcommerceSpec(newChecked),
+    [],
+  );
+
   useEffect(() => {
+    if (fetcher.state == 'loading' || fetcher.state == 'submitting') {
+      return;
+    }
     const data = fetcher.data as { ok: false; message: string } | { ok: true; message: string } | null;
     if (!data) {
       return;
@@ -198,6 +221,7 @@ export default function WebPixelEvents() {
           })
         ),
         web_pixel_feature_toggle: webPixelFeatureEnabled,
+        posthog_ecommerce_spec: checkedEcommerceSpec,
       },
       {
         method: 'POST',
@@ -211,8 +235,14 @@ export default function WebPixelEvents() {
     if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
       return true;
     }
-    return webPixelFeatureEnabled != webPixelFeatureToggleInitialState;
-  }, [webPixelSettings, webPixelFeatureEnabled, webPixelFeatureToggleInitialState, webPixelSettingsInitialState]);
+    if (webPixelFeatureEnabled != webPixelFeatureToggleInitialState) {
+      return true;
+    };
+    if (postHogEcommerceSpecMetafiledValue != checkedEcommerceSpec) {
+      return true;
+    }
+    return false;
+  }, [webPixelSettings, webPixelFeatureEnabled, webPixelFeatureToggleInitialState, webPixelSettingsInitialState, postHogEcommerceSpecMetafiledValue, checkedEcommerceSpec]);
 
   const allEventsDisabled = webPixelSettings.every((entry) => !entry.value);
   return (
@@ -268,6 +298,24 @@ export default function WebPixelEvents() {
                 ]}
               />
               <Divider />
+              <InlineStack gap="200" align="space-between"  blockAlign="center" wrap={false}>
+                <InlineStack gap="200" align="start"  blockAlign="center" wrap={false}>
+                  <Checkbox
+                    label="Toggle PostHog Ecommerce Spec"
+                    checked={checkedEcommerceSpec}
+                    onChange={handleChangeEcommerceSpec}
+                  />
+                  <InlineStack gap="200" align="start"  blockAlign="start" wrap={false}>
+                    <Icon source={posthogSvg} />
+                  </InlineStack>
+                </InlineStack>
+                <InlineStack gap="200" align="start"  blockAlign="start" wrap={false}>
+                  <Link url={urlWithShopParam(`https://pixiehog.com/faqs/introduction`, shop)}>Learn more</Link>
+
+                </InlineStack>
+              </InlineStack>
+              
+              <Divider />
               <Tabs disabled={!webPixelFeatureEnabled} tabs={tabs} selected={selectedTab} onSelect={handleTabChange}>
                 <BlockStack gap="500">
                   <TextField
@@ -283,6 +331,7 @@ export default function WebPixelEvents() {
                     settings={tabs[selectedTab].id === 'all' ? webPixelSettings : selectedWebPixelSettings}
                     onChange={handleWebPixelSettingChange}
                     featureEnabled={webPixelFeatureEnabled}
+                    keyOverride={checkedEcommerceSpec ? posthogKeys : shopifyKeys}
                   ></MultiChoiceSelector>
                 </BlockStack>
               </Tabs>
