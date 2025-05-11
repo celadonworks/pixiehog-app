@@ -71,8 +71,8 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       key: Constant.METAFIELD_KEY_POSTHOG_ECOMMERCE_SPEC,
       namespace: Constant.METAFIELD_NAMESPACE,
       ownerId: response.currentAppInstallation.id,
-      value: JSON.stringify(posthog_ecommerce_spec),
-      type: 'json',
+      value: posthog_ecommerce_spec.toString(),
+      type: 'boolean',
     },
   ]);
 
