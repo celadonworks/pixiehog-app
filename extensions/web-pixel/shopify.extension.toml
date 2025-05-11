@@ -37,3 +37,7 @@ validations =  [
   { name = "choices", value = "[\"anonymized\", \"non-anonymized\",\"non-anonymized-by-consent\"]" }
 ]
 
+[settings.fields.posthog_ecommerce_spec]
+name = "Toggle PostHog Ecommerce spec"
+description = "Toggle PostHog Ecommerce spec"
+type = "single_line_text_field"

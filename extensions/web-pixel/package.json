@@ -4,7 +4,7 @@
   "main": "dist/main.js",
   "license": "UNLICENSED",
   "dependencies": {
-    "@shopify/web-pixels-extension": "^2.10.0",
+    "@shopify/web-pixels-extension": "^2.18.0",
     "ua-parser-js": "^2.0.3"
   }
 }
