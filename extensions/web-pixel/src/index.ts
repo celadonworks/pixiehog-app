@@ -253,6 +253,7 @@ register(async (extensionApi) => {
     }
   })();
   //https://posthog.com/docs/data/events;
+
   const initProperties = {
     $os: userAgent?.os.name || null,
     $os_version: userAgent?.os.version || null,
@@ -267,8 +268,8 @@ register(async (extensionApi) => {
     $viewport_height: init.context.window.innerHeight,
     $viewport_width: init.context.window.innerWidth,
     $search_engine: getSearchEngine(init?.context?.document?.referrer || null),
-    $referrer: init.context.document.referrer,
-    $referring_domain: referringURLObject?.host || null,
+    $referrer: init.context.document.referrer || '$direct',
+    $referring_domain: referringURLObject?.host || '$direct',
     /** how to calculate active_feature_flags */
     //$active_feature_flags: null,
     shop: init.data.shop,
@@ -290,8 +291,8 @@ register(async (extensionApi) => {
       $device_type: userAgent?.device.type,
       $current_url: init.context.document.location.href,
       $pathname: currentURLObject?.pathname || null,
-      $referrer: init.context.document.referrer,
-      $referring_domain: referringURLObject?.host || null,
+      $referrer: init.context.document.referrer || '$direct',
+      $referring_domain: referringURLObject?.host || '$direct',
     },
     $set_once: {
       ...firstTouchCampaignParams,
@@ -302,8 +303,8 @@ register(async (extensionApi) => {
       $initial_device_type: userAgent?.device.type,
       $initial_current_url: init.context.document.location.href,
       $initial_pathname: currentURLObject?.pathname || null,
-      $initial_referrer: init.context.document.referrer,
-      $initial_referring_domain: referringURLObject?.host || null,
+      $initial_referrer: init.context.document.referrer || '$direct',
+      $initial_referring_domain: referringURLObject?.host || '$direct',
     },
     ...lastTouchCampaignParams,
   } as const;
@@ -486,6 +487,8 @@ register(async (extensionApi) => {
   activeEvents.includes('page_viewed') && analytics.subscribe(
     'page_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
+      console.log({eventreferINit:  init.context.document.referrer})
+      console.log({referEvent:  event.context.document.referrer})
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
       posthog.capture({
