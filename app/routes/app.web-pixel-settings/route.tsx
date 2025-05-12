@@ -310,7 +310,7 @@ export default function WebPixelEvents() {
                   </InlineStack>
                 </InlineStack>
                 <InlineStack gap="200" align="start"  blockAlign="start" wrap={false}>
-                  <Link url={urlWithShopParam(`https://pixiehog.com/docs/events-structures`, shop)}>Learn more</Link>
+                  <Link target='_blank' url={urlWithShopParam(`https://pixiehog.com/docs/events-structures`, shop)}>Learn more</Link>
 
                 </InlineStack>
               </InlineStack>
