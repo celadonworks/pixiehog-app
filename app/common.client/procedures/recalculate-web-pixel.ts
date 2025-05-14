@@ -22,7 +22,7 @@ export async function recalculateWebPixel(): Promise<
     | string[]
     | null
     | undefined;
-  const posthogEcommerceSpec = response.currentAppInstallation.web_pixel_posthog_ecommerce_spec?.jsonValue as undefined | boolean
+  const posthogEcommerceSpec = response.currentAppInstallation.web_pixel_posthog_ecommerce_spec?.value == 'true'
   type ValueOf<T> = T[keyof T];
   const dataCollectionStrategyKey = response.currentAppInstallation.data_collection_strategy
     ?.value as ValueOf<DataCollectionStrategy>;
