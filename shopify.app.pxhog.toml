@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "dccee050afcd89238a3d924aa7608d5c"
-name = "Pxhog"
-handle = "pxhog"
+name = "Pixiehog"
+handle = "pixiehog"
 application_url = "https://app.pxhog.com"
 embedded = true
 
