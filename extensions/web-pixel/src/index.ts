@@ -167,6 +167,8 @@ register(async (extensionApi) => {
     const distinct_id = uuidv7();
     await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
   }
+
+  const globalDistinctId = await resolveDistinctId()
   const posthog = new PixieHogPostHog(posthog_api_key, {
     fetch: fetch,
     host: posthog_api_host,
@@ -174,10 +176,32 @@ register(async (extensionApi) => {
     flushAt: 10,
     flushInterval: 100,
     bootstrap: {
-      distinctId: await resolveDistinctId(),
+      distinctId: globalDistinctId,
       isIdentifiedId: false,
     },
   });
+
+  async function calculateFeatureFlags() {
+  // if this fails we move on
+    try {
+      const flags =  await posthog.getAllFlags(globalDistinctId)
+      const keyedFlags = Object.entries(flags).sort((a, b) => a[0].localeCompare(b[0]))
+      return {
+        ...(keyedFlags.reduce((acc, [feature, variant]) => {
+          acc[`$feature/${feature}`] = variant
+          if (variant !== false) {
+            acc['$active_feature_flags'] = acc['$active_feature_flags'] ? [...acc['$active_feature_flags'], feature] : [feature]
+          }
+          return acc
+        }, {} as Record<string, any>))
+      }
+    } catch (error) {
+      console.error(error)
+      return {}
+    }
+  }
+  const featureFlags = await calculateFeatureFlags();
+
   type ValueOf<T> = T[keyof T];
   function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) {
     return async (event: T) => {
@@ -360,6 +384,7 @@ register(async (extensionApi) => {
           event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             ...{
               ...initProperties,
               ...(anonymous == true && {
@@ -420,6 +445,7 @@ register(async (extensionApi) => {
           event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             ...{
               ...initProperties,
               ...(anonymous == true && {
@@ -465,6 +491,7 @@ register(async (extensionApi) => {
           event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             $session_id : sessionId,
             $configured_session_timeout_ms: sessionTimeoutMs,
             $window_id: windowId,
@@ -497,6 +524,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -534,6 +562,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -565,6 +594,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -596,6 +626,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -628,6 +659,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -675,6 +707,7 @@ register(async (extensionApi) => {
         event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           $session_id : sessionId,
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
