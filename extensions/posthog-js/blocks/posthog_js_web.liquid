@@ -68,37 +68,10 @@
              */
             const parsedConfig = JSON.parse(`{{ app.metafields.pxhog.js_web_posthog_config }}` || "{}") || {};
 
- 
-            const shopifyConsentLoaded = await new Promise((resolve) => {
-                window.Shopify.loadFeatures(
-                    [
-                      {
-                        name: 'consent-tracking-api',
-                        version: '0.1',
-                      },
-                    ],
-                    error => {
-                      if (error) {
-                        console.error(error);
-                        resolve(false)
-                        return;
-                      }
-                      resolve(true)
-                      return;
-                    },
-                );
-            });
-
-            if (!shopifyConsentLoaded) {
-                throw new Error('[pxhog] failed to obtain customer privacy settings')
-            }
-
-
-
             /* eslint-disable no-unused-expressions */
             !(function (t, e) {
-            var o, n, p, r;
-            e.__SV ||
+                var o, n, p, r;
+                e.__SV ||
                 ((window.posthog = e),
                 (e._i = []),
                 (e.init = function (i, s, a) {
@@ -141,6 +114,30 @@
                 (e.__SV = 1));
             })(document, window.posthog || []);
 
+            const shopifyConsentLoaded = await new Promise((resolve) => {
+                window.Shopify.loadFeatures(
+                    [
+                      {
+                        name: 'consent-tracking-api',
+                        version: '0.1',
+                      },
+                    ],
+                    error => {
+                      if (error) {
+                        console.error(error);
+                        resolve(false)
+                        return;
+                      }
+                      resolve(true)
+                      return;
+                    },
+                );
+            });
+
+            if (!shopifyConsentLoaded) {
+                throw new Error('[pxhog] failed to obtain customer privacy settings')
+            }
+            
             const hasNewDistinctId = recalculateAnonymous()
          
 
