@@ -9,6 +9,8 @@ import { calculateCampaignParams } from './campaign-params';
 import { UAParser } from 'ua-parser-js';
 import { getSearchEngine } from './utils';
 import { PixieHogPostHog } from './pixiehog-posthog';
+import { webPixelToPostHogEcommerceSpecTransformerMap } from './posthog-ecommerce-spec/transformer-map';
+import { webPixelToPostHogEcommerceSpecMap } from './posthog-ecommerce-spec/event-map';
 
 register(async (extensionApi) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -19,7 +21,11 @@ register(async (extensionApi) => {
     customerPrivacy,
   } = extensionApi;
   const settings = extensionApi.settings as WebPixelSettings & Partial<WebPixelEventsSettings>;
-  
+  /**
+   * Web Pixel settings can only be strings
+   */
+  const posthogEcommerceSpecEnabled = String(settings?.posthog_ecommerce_spec || '') == 'true'
+  console.log({posthogEcommerceSpecEnabled})
   const possibleEvents: (keyof PixelEvents)[] = [
     'cart_viewed',
     'checkout_address_info_submitted',
@@ -36,7 +42,6 @@ register(async (extensionApi) => {
     'payment_info_submitted',
     'product_added_to_cart',
     'product_removed_from_cart',
-    'product_variant_viewed',
     'product_viewed',
     'search_submitted',
   ] as const;
@@ -162,6 +167,8 @@ register(async (extensionApi) => {
     const distinct_id = uuidv7();
     await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
   }
+
+  const globalDistinctId = await resolveDistinctId()
   const posthog = new PixieHogPostHog(posthog_api_key, {
     fetch: fetch,
     host: posthog_api_host,
@@ -169,10 +176,32 @@ register(async (extensionApi) => {
     flushAt: 10,
     flushInterval: 100,
     bootstrap: {
-      distinctId: await resolveDistinctId(),
+      distinctId: globalDistinctId,
       isIdentifiedId: false,
     },
   });
+
+  async function calculateFeatureFlags() {
+  // if this fails we move on
+    try {
+      const flags =  await posthog.getAllFlags(globalDistinctId)
+      const keyedFlags = Object.entries(flags).sort((a, b) => a[0].localeCompare(b[0]))
+      return {
+        ...(keyedFlags.reduce((acc, [feature, variant]) => {
+          acc[`$feature/${feature}`] = variant
+          if (variant !== false) {
+            acc['$active_feature_flags'] = acc['$active_feature_flags'] ? [...acc['$active_feature_flags'], feature] : [feature]
+          }
+          return acc
+        }, {} as Record<string, any>))
+      }
+    } catch (error) {
+      console.error(error)
+      return {}
+    }
+  }
+  const featureFlags = await calculateFeatureFlags();
+
   type ValueOf<T> = T[keyof T];
   function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) {
     return async (event: T) => {
@@ -248,6 +277,7 @@ register(async (extensionApi) => {
     }
   })();
   //https://posthog.com/docs/data/events;
+
   const initProperties = {
     $os: userAgent?.os.name || null,
     $os_version: userAgent?.os.version || null,
@@ -262,8 +292,8 @@ register(async (extensionApi) => {
     $viewport_height: init.context.window.innerHeight,
     $viewport_width: init.context.window.innerWidth,
     $search_engine: getSearchEngine(init?.context?.document?.referrer || null),
-    $referrer: init.context.document.referrer,
-    $referring_domain: referringURLObject?.host || null,
+    $referrer: init.context.document.referrer || '$direct',
+    $referring_domain: referringURLObject?.host || '$direct',
     /** how to calculate active_feature_flags */
     //$active_feature_flags: null,
     shop: init.data.shop,
@@ -285,8 +315,8 @@ register(async (extensionApi) => {
       $device_type: userAgent?.device.type,
       $current_url: init.context.document.location.href,
       $pathname: currentURLObject?.pathname || null,
-      $referrer: init.context.document.referrer,
-      $referring_domain: referringURLObject?.host || null,
+      $referrer: init.context.document.referrer || '$direct',
+      $referring_domain: referringURLObject?.host || '$direct',
     },
     $set_once: {
       ...firstTouchCampaignParams,
@@ -297,11 +327,39 @@ register(async (extensionApi) => {
       $initial_device_type: userAgent?.device.type,
       $initial_current_url: init.context.document.location.href,
       $initial_pathname: currentURLObject?.pathname || null,
-      $initial_referrer: init.context.document.referrer,
-      $initial_referring_domain: referringURLObject?.host || null,
+      $initial_referrer: init.context.document.referrer || '$direct',
+      $initial_referring_domain: referringURLObject?.host || '$direct',
     },
     ...lastTouchCampaignParams,
   } as const;
+
+  const resolveEventEcommerceName = (name: string) => {
+    if (!posthogEcommerceSpecEnabled) {
+      return name
+    }
+    const mapped = webPixelToPostHogEcommerceSpecMap[name]
+    if (!mapped) {
+      return name;
+    }
+    return mapped
+  }
+
+  const resolveEventEcommerceSpecBody = (event: PixelEvents[keyof PixelEvents]) => {
+    console.log({posthogEcommerceSpecEnabled, event})
+    if (!posthogEcommerceSpecEnabled) {
+      return {};
+    }
+    const transformer = webPixelToPostHogEcommerceSpecTransformerMap[event.name]
+    console.log({transformer})
+    if (!transformer) {
+      return {}
+    }
+    const transformed = transformer(init.data.shop, event)
+    console.log({transformed})
+
+    return transformed;
+
+  }
 
   const checkoutKeys = [
     'checkout_started',
@@ -319,12 +377,14 @@ register(async (extensionApi) => {
       preprocessEvent(async (event, uuid, anonymous) => {
         const distinctId = await resolveDistinctId();
         const {sessionId,windowId} = await resolveSessionId();
+
         posthog.capture({
           ...(uuid ? { uuid: uuid } : {}),
           distinctId,
-          event: event.name,
+          event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             ...{
               ...initProperties,
               ...(anonymous == true && {
@@ -364,6 +424,7 @@ register(async (extensionApi) => {
                   email: event.data.checkout.email,
                 },
               }),
+            ...resolveEventEcommerceSpecBody(event)
           },
         });
       })
@@ -381,9 +442,10 @@ register(async (extensionApi) => {
         posthog.capture({
           ...(uuid ? { uuid: uuid } : {}),
           distinctId,
-          event: event.name,
+          event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             ...{
               ...initProperties,
               ...(anonymous == true && {
@@ -406,6 +468,7 @@ register(async (extensionApi) => {
                 quantity: event.data.cartLine.quantity,
               },
             }),
+            ...resolveEventEcommerceSpecBody(event)
           },
         });
       })
@@ -425,9 +488,10 @@ register(async (extensionApi) => {
         posthog.capture({
           ...(uuid ? { uuid: uuid } : {}),
           distinctId,
-          event: event.name,
+          event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
           properties: {
+            ...featureFlags,
             $session_id : sessionId,
             $configured_session_timeout_ms: sessionTimeoutMs,
             $window_id: windowId,
@@ -440,6 +504,7 @@ register(async (extensionApi) => {
             },
             client_id: event.clientId,
             ...event.data.element,
+            ...resolveEventEcommerceSpecBody(event)
           },
         });
       })
@@ -449,14 +514,17 @@ register(async (extensionApi) => {
   activeEvents.includes('page_viewed') && analytics.subscribe(
     'page_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
+      console.log({eventreferINit:  init.context.document.referrer})
+      console.log({referEvent:  event.context.document.referrer})
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -477,6 +545,7 @@ register(async (extensionApi) => {
             anonymous == false && {
               $set: init.data.customer,
             }),
+            ...resolveEventEcommerceSpecBody(event)
         },
       });
     })
@@ -490,9 +559,10 @@ register(async (extensionApi) => {
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -507,6 +577,7 @@ register(async (extensionApi) => {
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
           ...event.data.collection,
+          ...resolveEventEcommerceSpecBody(event)
         },
       });
     })
@@ -520,9 +591,10 @@ register(async (extensionApi) => {
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -537,6 +609,7 @@ register(async (extensionApi) => {
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
           ...event.data.productVariant,
+          ...resolveEventEcommerceSpecBody(event)
         },
       });
     })
@@ -550,9 +623,10 @@ register(async (extensionApi) => {
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -568,6 +642,7 @@ register(async (extensionApi) => {
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
           ...event.data.cart,
+          ...resolveEventEcommerceSpecBody(event)
         },
       });
     })
@@ -581,9 +656,10 @@ register(async (extensionApi) => {
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           ...{
             ...initProperties,
             ...(anonymous == true && {
@@ -598,6 +674,7 @@ register(async (extensionApi) => {
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
           ...event.data.searchResult,
+          ...resolveEventEcommerceSpecBody(event)
         },
       });
     })
@@ -627,9 +704,10 @@ register(async (extensionApi) => {
       posthog.capture({
         ...(uuid ? { uuid: uuid } : {}),
         distinctId,
-        event: event.name,
+        event: resolveEventEcommerceName(event.name),
         timestamp: new Date(event.timestamp),
         properties: {
+          ...featureFlags,
           $session_id : sessionId,
           $configured_session_timeout_ms: sessionTimeoutMs,
           $window_id: windowId,
@@ -650,6 +728,7 @@ register(async (extensionApi) => {
                 email: email,
               },
             }),
+          ...resolveEventEcommerceSpecBody(event)
         },
       });
     })

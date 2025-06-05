@@ -92,6 +92,18 @@ const shopify = shopifyApp({
                 value: JSON.stringify(defaultJSWebConfig),
               },
             ]),
+
+            ...(currentAppInstallation.web_pixel_posthog_ecommerce_spec
+              ? []
+              : [
+                  {
+                    key: Constant.METAFIELD_KEY_JS_WEB_POSTHOG_CONFIG,
+                    namespace: Constant.METAFIELD_NAMESPACE,
+                    ownerId: currentAppInstallation.id,
+                    type: 'boolean',
+                    value: String(true),
+                  },
+                ]),
       ]);
     },
   },

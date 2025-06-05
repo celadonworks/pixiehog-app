@@ -48,6 +48,13 @@ function PosthogInit() {
     lastUrl.current = url;
     posthog.capture('$pageview', {
       $current_url: url,
+      shop: shopify.config.shop,
+      $set: {
+        shop: shopify.config.shop
+      },
+      $set_once: {
+        initial_shop: shopify.config.shop,
+      }
     });
   }, [location.pathname]);
   return null;

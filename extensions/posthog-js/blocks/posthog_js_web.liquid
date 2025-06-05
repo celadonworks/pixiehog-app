@@ -1,5 +1,14 @@
 {% if app.metafields.pxhog.js_web_posthog_feature_toggle == true and request.design_mode == false %}
-
+    <style>
+        /* 
+        Most Shopify themes has div:empty {display: none}
+        the issue is that PostHog uses shadowDOM and if a div has a shadow dom only it is considered empty
+        https://github.com/w3c/csswg-drafts/issues/6771
+        */
+        div[class^="PostHogSurvey"]:empty {
+            display: block;
+        }
+    </style>
     <script type="module">
         import { uuidv7 } from  '{{'uuidv7.js' | asset_url}}';
         await (async () => {
