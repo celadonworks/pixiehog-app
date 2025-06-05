@@ -72,6 +72,26 @@
                 throw Error('[pxhog]: Posthog apiHost is not set')
             }
 
+            const shopifyConsentLoadedPromise = new Promise((resolve) => {
+                window.Shopify.loadFeatures(
+                    [
+                      {
+                        name: 'consent-tracking-api',
+                        version: '0.1',
+                      },
+                    ],
+                    error => {
+                      if (error) {
+                        console.error(error);
+                        resolve(false)
+                        return;
+                      }
+                      resolve(true)
+                      return;
+                    },
+                );
+            });
+
             /**
              * @type {Record<string, any>}
              */
@@ -122,34 +142,33 @@
                 }),
                 (e.__SV = 1));
             })(document, window.posthog || []);
+            
+            const hasNewDistinctId = recalculateAnonymous()
 
-            const shopifyConsentLoaded = await new Promise((resolve) => {
-                window.Shopify.loadFeatures(
-                    [
-                      {
-                        name: 'consent-tracking-api',
-                        version: '0.1',
-                      },
-                    ],
-                    error => {
-                      if (error) {
-                        console.error(error);
-                        resolve(false)
-                        return;
-                      }
-                      resolve(true)
-                      return;
-                    },
-                );
-            });
+            /**
+             * @type {Partial<PostHogJsWebConfig>}
+             */
+             const posthogConfig = {
+                api_host: apiHost,
+                ...parsedConfig,
+                ...(hasNewDistinctId && {
+                    bootstrap: {
+                        distinctID: hasNewDistinctId,
+                    }
+                })
+                    
 
+            };
+            
+            window.posthog.init(apiKey, posthogConfig);
+
+            const shopifyConsentLoaded = await shopifyConsentLoadedPromise
+            
             if (!shopifyConsentLoaded) {
+                window.posthog.reset(true)
                 throw new Error('[pxhog] failed to obtain customer privacy settings')
             }
             
-            const hasNewDistinctId = recalculateAnonymous()
-         
-
             {% comment %}  
             /**
              * @typedef {Object} PostHogJsWebConfig
@@ -242,22 +261,7 @@
                 }
             });
 
-            /**
-             * @type {Partial<PostHogJsWebConfig>}
-             */
-             const posthogConfig = {
-                api_host: apiHost,
-                ...parsedConfig,
-                ...(hasNewDistinctId && {
-                    bootstrap: {
-                        distinctID: hasNewDistinctId,
-                    }
-                })
-                    
-
-            };
             
-            window.posthog.init(apiKey, posthogConfig);
 
            
         })();
