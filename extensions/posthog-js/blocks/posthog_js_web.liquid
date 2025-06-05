@@ -143,6 +143,30 @@
                 (e.__SV = 1));
             })(document, window.posthog || []);
 
+            const shopifyConsentLoaded = await new Promise((resolve) => {
+                window.Shopify.loadFeatures(
+                    [
+                      {
+                        name: 'consent-tracking-api',
+                        version: '0.1',
+                      },
+                    ],
+                    error => {
+                      if (error) {
+                        console.error(error);
+                        resolve(false)
+                        return;
+                      }
+                      resolve(true)
+                      return;
+                    },
+                );
+            });
+
+            if (!shopifyConsentLoaded) {
+                throw new Error('[pxhog] failed to obtain customer privacy settings')
+            }
+            
             const hasNewDistinctId = recalculateAnonymous()
 
             /**
