@@ -94,20 +94,6 @@ export default function JsWebEvents() {
   const jsWebPosthogSettingsInitialState = defaultJsWebPosthogSettings.map<JsWebPosthogSettingChoice>((entry) => {
     return {
       ...entry,
-      ...(entry.key == 'ui_host' && entry.type == SettingType.Select && {
-        selectOptions: entry.selectOptions.map((v) => {
-          const label = (() => {
-            if (v == 'https://eu.posthog.com') {
-              return 'Posthog EU'
-            }
-            return 'Posthog US'
-          })();
-          return {
-            label: label,
-            value: v,
-          }
-        })
-      }),
       value: jsWebPosthogSettingsMetafieldValue?.[entry.key],
     } as JsWebPosthogSettingChoice;
 
@@ -219,7 +205,7 @@ export default function JsWebEvents() {
   };
 
   const dirty = useMemo(() => {
-   
+
     const diff = detailedDiff(jsWebPosthogSettingsInitialState || {}, jsWebPosthogSettings);
 
     if (Object.values(diff).some((changeType: object) => Object.keys(changeType).length != 0)) {
