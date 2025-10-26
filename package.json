@@ -1,7 +1,7 @@
 {
   "name": "pixiehog",
   "license": "FSL-1.1-Apache-2.0",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "scripts": {
     "build": "remix vite:build",

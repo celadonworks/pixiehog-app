@@ -1,15 +1,28 @@
-import { PostHog } from 'posthog-node';
+import PostHog from 'posthog-js-lite'
 /* import { version } from '../package.json';
  */
 export class PixieHogPostHog extends PostHog {
+
   getLibraryId(): string {
     return 'pixiehog';
   }
   getLibraryVersion(): string {
-    return '1.0.5';
+    return '1.0.6';
+  }
+
+  getCommonEventProperties() {
+    return {
+      $lib: this.getLibraryId(),
+      $lib_version: this.getLibraryVersion(),
+    }
   }
   getCustomUserAgent(): string {
     return `${super.getLibraryId()}/${super.getLibraryVersion()}`
+  }
+
+  public async captureStatelessPublic(...args: Parameters<PostHog['captureStateless']>
+  ): Promise<void> {
+    return super.captureStateless(...args)
   }
 
   protected getCustomHeaders(): { [key: string]: string; } {

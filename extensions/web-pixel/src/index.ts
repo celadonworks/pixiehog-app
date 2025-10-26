@@ -11,6 +11,7 @@ import { getSearchEngine } from './utils';
 import { PixieHogPostHog } from './pixiehog-posthog';
 import { webPixelToPostHogEcommerceSpecTransformerMap } from './posthog-ecommerce-spec/transformer-map';
 import { webPixelToPostHogEcommerceSpecMap } from './posthog-ecommerce-spec/event-map';
+type JsonType = string | number | boolean | null | { [key: string]: JsonType } | Array<JsonType> | JsonType[]
 
 register(async (extensionApi) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -170,7 +171,6 @@ register(async (extensionApi) => {
 
   const globalDistinctId = await resolveDistinctId()
   const posthog = new PixieHogPostHog(posthog_api_key, {
-    fetch: fetch,
     host: posthog_api_host,
     persistence: 'memory',
     flushAt: 10,
@@ -184,7 +184,7 @@ register(async (extensionApi) => {
   async function calculateFeatureFlags() {
   // if this fails we move on
     try {
-      const flags =  await posthog.getAllFlags(globalDistinctId)
+      const flags =  await posthog.getFeatureFlags() || {}
       const keyedFlags = Object.entries(flags).sort((a, b) => a[0].localeCompare(b[0]))
       return {
         ...(keyedFlags.reduce((acc, [feature, variant]) => {
@@ -202,6 +202,20 @@ register(async (extensionApi) => {
   }
   const featureFlags = await calculateFeatureFlags();
 
+  const anonymous: boolean = (() =>{
+
+    if(settings.data_collection_strategy == 'anonymized') {
+      return true
+    }
+    if(settings.data_collection_strategy == 'non-anonymized') {
+      return false
+    }
+    if(settings.data_collection_strategy == 'non-anonymized-by-consent') {
+      return  !customerPrivacyStatus.analyticsProcessingAllowed
+    }
+    return true
+  })()
+
   type ValueOf<T> = T[keyof T];
   function preprocessEvent<T extends ValueOf<StandardEvents>>(fn: (t: T, u: string | undefined, p: boolean) => void) {
     return async (event: T) => {
@@ -211,19 +225,6 @@ register(async (extensionApi) => {
       }
       const uuid: string | undefined = event.id;
       const validateEventUUID: string | undefined = extractEventUUID(uuid);
-      const anonymous: boolean = (() =>{
-
-        if(settings.data_collection_strategy == 'anonymized') {
-          return true
-        }
-        if(settings.data_collection_strategy == 'non-anonymized') {
-          return false
-        }
-        if(settings.data_collection_strategy == 'non-anonymized-by-consent') {
-          return  !customerPrivacyStatus.analyticsProcessingAllowed
-        }
-        return true
-      })()
     
       const PXHOG_ANONYMOUS_KEY = 'pxhog_anonymous_key';
 
@@ -283,7 +284,7 @@ register(async (extensionApi) => {
     $os_version: userAgent?.os.version || null,
     $browser: userAgent?.browser.name || null,
     $browser_version: userAgent?.browser.version ? String(userAgent.browser.version) : null,
-    $device_type: userAgent?.device.type,
+    $device_type: (userAgent?.device.type || null) as JsonType,
     $current_url: init.context.document.location.href,
     $host: currentURLObject?.host || null,
     $pathname: currentURLObject?.pathname || null,
@@ -296,23 +297,19 @@ register(async (extensionApi) => {
     $referring_domain: referringURLObject?.host || '$direct',
     /** how to calculate active_feature_flags */
     //$active_feature_flags: null,
-    shop: init.data.shop,
-    ...(init.data.customer && {
-      customer: init.data.customer,
-    }),
+    shop: init.data.shop as any,
+    ...(init.data.customer as any),
     // this might be out of date if the store uses side-cart
-    ...(init.data.cart && {
-      cart: init.data.cart,
-    }),
+    ...(init.data.cart as any),
     //https://posthog.com/docs/product-analytics/person-properties
     $set: {
       ...lastTouchCampaignParams,
-      ...init.data.customer,
+      ...init.data.customer as any,
       $browser: userAgent?.browser.name || null,
       $browser_version: userAgent?.browser.version || null,
       $os: userAgent?.os.name || null,
       $os_version: userAgent?.os.version || null,
-      $device_type: userAgent?.device.type,
+      $device_type: userAgent?.device.type as JsonType || null,
       $current_url: init.context.document.location.href,
       $pathname: currentURLObject?.pathname || null,
       $referrer: init.context.document.referrer || '$direct',
@@ -324,7 +321,7 @@ register(async (extensionApi) => {
       $initial_browser_version: userAgent?.browser.version || null,
       $initial_os: userAgent?.os.name || null,
       $initial_os_version: userAgent?.os.version || null,
-      $initial_device_type: userAgent?.device.type,
+      $initial_device_type: userAgent?.device.type as JsonType || null,
       $initial_current_url: init.context.document.location.href,
       $initial_pathname: currentURLObject?.pathname || null,
       $initial_referrer: init.context.document.referrer || '$direct',
@@ -332,6 +329,19 @@ register(async (extensionApi) => {
     },
     ...lastTouchCampaignParams,
   } as const;
+
+  const setDistinctId = async (str: string) => {
+    const webPostHogPersistedString = await getPostHogLocalStorage()
+    const webPostHogPersisted: {
+      distinct_id: string;
+    } | null = webPostHogPersistedString ? JSON.parse(webPostHogPersistedString) : {};
+    await localStorage.setItem(POSTHOG_KEY, JSON.stringify({...webPostHogPersisted, distinct_id: str }));
+  }
+
+  if (init.data.customer?.email && anonymous == false && globalDistinctId != init.data.customer.email) {
+    await setDistinctId(init.data.customer?.email)
+    await posthog.identify(init.data.customer?.email)
+  }
 
   const resolveEventEcommerceName = (name: string) => {
     if (!posthogEcommerceSpecEnabled) {
@@ -370,6 +380,7 @@ register(async (extensionApi) => {
     'payment_info_submitted',
   ] as const;
 
+  
   const trackedCheckoutKeys = checkoutKeys.filter((key) => activeEvents.includes(key));
   for (const key of trackedCheckoutKeys) {
     analytics.subscribe(
@@ -377,56 +388,50 @@ register(async (extensionApi) => {
       preprocessEvent(async (event, uuid, anonymous) => {
         const distinctId = await resolveDistinctId();
         const {sessionId,windowId} = await resolveSessionId();
-
-        posthog.capture({
+        const eventName = resolveEventEcommerceName(event.name);
+        await posthog.captureStatelessPublic(distinctId, eventName, {
+          ...featureFlags,
+          ...initProperties,
+          ...(anonymous == true && {
+            customer: null,
+            purchasingCompany: null,
+          }),
+          cart: null,
+          client_id: event.clientId,
+          url: event.context.document.location.href,
+          $current_url: event.context.document.location.href,
+          $session_id : sessionId,
+          $configured_session_timeout_ms: sessionTimeoutMs,
+          $window_id: windowId,
+          ...(event.data.checkout),
+            ...(anonymous == true && {
+              billingAddress: null,
+              email: null,
+              order: {
+                ...(event.data.checkout.order as unknown as any),
+                customer: {
+                  ...(event.data.checkout.order?.customer as unknown as any),
+                  id: null,
+                },
+                id: null,
+              },
+              phone: null,
+              shippingAddress: null,
+              smsMarketingPhone: null,
+            }),
+          ...resolveEventEcommerceSpecBody(event)
+        }, {
           ...(uuid ? { uuid: uuid } : {}),
-          distinctId,
-          event: resolveEventEcommerceName(event.name),
           timestamp: new Date(event.timestamp),
-          properties: {
-            ...featureFlags,
-            ...{
-              ...initProperties,
-              ...(anonymous == true && {
-                customer: undefined,
-                purchasingCompany: undefined,
-              }),
-              cart: undefined,
-            },
-            client_id: event.clientId,
-            url: event.context.document.location.href,
-            $current_url: event.context.document.location.href,
-            $session_id : sessionId,
-            $configured_session_timeout_ms: sessionTimeoutMs,
-            $window_id: windowId,
-            ...{
-              ...event.data.checkout,
-              ...(anonymous == true && {
-                billingAddress: undefined,
-                email: undefined,
-                order: {
-                  ...event.data.checkout.order,
-                  customer: {
-                    ...event.data.checkout.order?.customer,
-                    id: undefined,
-                  },
-                  id: undefined,
-                },
-                phone: undefined,
-                shippingAddress: undefined,
-                smsMarketingPhone: undefined,
-              }),
-            },
-            ...(event.name == 'checkout_contact_info_submitted' &&
-              event.data.checkout.email &&
-              anonymous == false && {
-                $set: {
-                  email: event.data.checkout.email,
-                },
-              }),
-            ...resolveEventEcommerceSpecBody(event)
-          },
         });
+
+        const email = event.data.checkout.email
+        console.log({email, distinctId, anonymous})
+        if (email && anonymous == false && distinctId != email) {
+          await setDistinctId(email)
+          await posthog.identify(email)
+        }
+      
       })
     );
   }
@@ -439,20 +444,15 @@ register(async (extensionApi) => {
       preprocessEvent(async (event, uuid, anonymous) => {
         const distinctId = await resolveDistinctId();
         const {sessionId,windowId} = await resolveSessionId()
-        posthog.capture({
-          ...(uuid ? { uuid: uuid } : {}),
-          distinctId,
-          event: resolveEventEcommerceName(event.name),
-          timestamp: new Date(event.timestamp),
-          properties: {
+        const eventName = resolveEventEcommerceName(event.name);
+        posthog.captureStatelessPublic(distinctId, eventName, 
+          {
             ...featureFlags,
-            ...{
-              ...initProperties,
-              ...(anonymous == true && {
-                customer: undefined,
-                purchasingCompany: undefined,
-              }),
-            },
+            ...initProperties,
+            ...(anonymous == true && {
+              customer: undefined,
+              purchasingCompany: undefined,
+            }),
             client_id: event.clientId,
             url: event.context.document.location.href,
             $current_url: event.context.document.location.href,
@@ -460,16 +460,14 @@ register(async (extensionApi) => {
             $configured_session_timeout_ms: sessionTimeoutMs,
             $window_id: windowId,
             ...(event.data.cartLine && {
-              ...{
-                ...event.data.cartLine.merchandise,
-              },
-              ...{
-                cost: event.data.cartLine.cost,
+                ...(event.data.cartLine.merchandise as unknown as any),
+                cost: event.data.cartLine.cost.totalAmount.amount,
                 quantity: event.data.cartLine.quantity,
-              },
             }),
             ...resolveEventEcommerceSpecBody(event)
-          },
+          }, {
+          ...(uuid ? { uuid: uuid } : {}),
+          timestamp: new Date(event.timestamp),
         });
       })
     );
@@ -485,27 +483,25 @@ register(async (extensionApi) => {
         // cannot set URL
         const distinctId = await resolveDistinctId();
         const {sessionId,windowId} = await resolveSessionId()
-        posthog.capture({
-          ...(uuid ? { uuid: uuid } : {}),
-          distinctId,
-          event: resolveEventEcommerceName(event.name),
-          timestamp: new Date(event.timestamp),
-          properties: {
-            ...featureFlags,
-            $session_id : sessionId,
-            $configured_session_timeout_ms: sessionTimeoutMs,
-            $window_id: windowId,
-            ...{
-              ...initProperties,
-              ...(anonymous == true && {
-                customer: undefined,
-                purchasingCompany: undefined,
-              }),
-            },
-            client_id: event.clientId,
-            ...event.data.element,
-            ...resolveEventEcommerceSpecBody(event)
+        const eventName = resolveEventEcommerceName(event.name)
+        posthog.captureStatelessPublic( distinctId, eventName,{
+          ...featureFlags,
+          $session_id : sessionId,
+          $configured_session_timeout_ms: sessionTimeoutMs,
+          $window_id: windowId,
+          ...{
+            ...initProperties,
+            ...(anonymous == true && {
+              customer: undefined,
+              purchasingCompany: undefined,
+            }),
           },
+          client_id: event.clientId,
+          ...event.data.element as any,
+          ...resolveEventEcommerceSpecBody(event)
+        }, {
+          ...(uuid ? { uuid: uuid } : {}),
+          timestamp: new Date(event.timestamp),
         });
       })
     );
@@ -518,35 +514,31 @@ register(async (extensionApi) => {
       console.log({referEvent:  event.context.document.referrer})
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
+      const eventName = resolveEventEcommerceName(event.name);
+      posthog.captureStatelessPublic(distinctId, eventName, {
+        ...featureFlags,
+        ...initProperties,
+        ...(anonymous == true && {
+          customer: null,
+          purchasingCompany: null,
+          $process_person_profile: false,
+        }),
+        client_id: event.clientId,
+        url: event.context.document.location.href,
+        $current_url: event.context.document.location.href,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...event.data,
+        /**set person properties in 1 call, this is most frequent event */
+        ...(init.data.customer &&
+          anonymous == false && {
+            $set: init.data.customer,
+          }),
+          ...resolveEventEcommerceSpecBody(event)
+      }, {
         timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-              $process_person_profile: false,
-            }),
-          },
-          client_id: event.clientId,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...event.data,
-          /**set person properties in 1 call, this is most frequent event */
-          ...(init.data.customer &&
-            anonymous == false && {
-              $set: init.data.customer,
-            }),
-            ...resolveEventEcommerceSpecBody(event)
-        },
+        ...(uuid ? { uuid: uuid } : {}),
       });
     })
   );
@@ -556,29 +548,25 @@ register(async (extensionApi) => {
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
+      const eventName = resolveEventEcommerceName(event.name)
+      posthog.captureStatelessPublic(distinctId, eventName,{
+        ...featureFlags,
+        ...initProperties,
+        ...(anonymous == true && {
+          customer: undefined,
+          purchasingCompany: undefined,
+        }),
+        client_id: event.clientId,
+        url: event.context.document.location.href,
+        $current_url: event.context.document.location.href,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...event.data.collection as any,
+        ...resolveEventEcommerceSpecBody(event)
+      }, {
         timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-            }),
-          },
-          client_id: event.clientId,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...event.data.collection,
-          ...resolveEventEcommerceSpecBody(event)
-        },
+        ...(uuid ? { uuid: uuid } : {}),
       });
     })
   );
@@ -588,29 +576,26 @@ register(async (extensionApi) => {
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
+      const eventName = resolveEventEcommerceName(event.name)
+      posthog.captureStatelessPublic(distinctId, eventName, {
+        ...featureFlags,
+        ...initProperties,
+        ...(anonymous == true && {
+          customer: undefined,
+          purchasingCompany: undefined,
+        }),
+        client_id: event.clientId,
+        url: event.context.document.location.href,
+        $current_url: event.context.document.location.href,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...event.data.productVariant as any,
+        ...resolveEventEcommerceSpecBody(event)
+      }, {
         timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-            }),
-          },
-          client_id: event.clientId,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...event.data.productVariant,
-          ...resolveEventEcommerceSpecBody(event)
-        },
+        ...(uuid ? { uuid: uuid } : {}),
+
       });
     })
   );
@@ -620,30 +605,28 @@ register(async (extensionApi) => {
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
-        timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-            }),
-            cart: undefined,
-          },
-          client_id: event.clientId,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...event.data.cart,
-          ...resolveEventEcommerceSpecBody(event)
+      const eventName = resolveEventEcommerceName(event.name);
+      posthog.captureStatelessPublic(distinctId, eventName, {
+        ...featureFlags,
+        ...{
+          ...initProperties,
+          ...(anonymous == true && {
+            customer: undefined,
+            purchasingCompany: undefined,
+          }),
+          cart: undefined,
         },
+        client_id: event.clientId,
+        url: event.context.document.location.href,
+        $current_url: event.context.document.location.href,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...event.data.cart as any,
+        ...resolveEventEcommerceSpecBody(event)
+      }, {
+        timestamp: new Date(event.timestamp),
+        ...(uuid ? { uuid: uuid } : {}),
       });
     })
   );
@@ -651,31 +634,30 @@ register(async (extensionApi) => {
   activeEvents.includes('search_submitted') && analytics.subscribe(
     'search_submitted',
     preprocessEvent(async (event, uuid, anonymous) => {
+      
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
+      const eventName = resolveEventEcommerceName(event.name);
+      posthog.captureStatelessPublic(distinctId, eventName,{
+        ...featureFlags,
+          ...initProperties,
+          ...(anonymous == true && {
+            customer: undefined,
+            purchasingCompany: undefined,
+          }),
+        client_id: event.clientId,
+        url: event.context.document.location.href,
+        $current_url: event.context.document.location.href,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...event.data.searchResult as any,
+        ...resolveEventEcommerceSpecBody(event)
+      }, {
         timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-            }),
-          },
-          client_id: event.clientId,
-          url: event.context.document.location.href,
-          $current_url: event.context.document.location.href,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...event.data.searchResult,
-          ...resolveEventEcommerceSpecBody(event)
-        },
+
+        ...(uuid ? { uuid: uuid } : {}),
+
       });
     })
   );
@@ -684,6 +666,7 @@ register(async (extensionApi) => {
     'form_submitted',
     preprocessEvent(async (event, uuid, anonymous) => {
       const distinctId = await resolveDistinctId();
+      const eventName = resolveEventEcommerceName(event.name);
       const {sessionId,windowId} = await resolveSessionId()
       const emailRegex = /email/i;
       const [email] = event.data.element.elements
@@ -701,36 +684,38 @@ register(async (extensionApi) => {
           })
           .filter((el): el is [string, string] => !!el)
       );
-      posthog.capture({
-        ...(uuid ? { uuid: uuid } : {}),
-        distinctId,
-        event: resolveEventEcommerceName(event.name),
+      await posthog.captureStatelessPublic(distinctId, eventName, {
+        ...featureFlags,
+        $session_id : sessionId,
+        $configured_session_timeout_ms: sessionTimeoutMs,
+        $window_id: windowId,
+        ...initProperties,
+        ...(anonymous == true && {
+          customer: null,
+          purchasingCompany: null,
+        }),
+        client_id: event.clientId,
+        form: event.data.element.elements as any,
+        form_body: formBody as any,
+        action: event.data.element.action as any,
+        ...(email &&
+          anonymous == false && {
+            $set: {
+              email: email,
+            },
+          }),
+        ...resolveEventEcommerceSpecBody(event)
+      }, {
         timestamp: new Date(event.timestamp),
-        properties: {
-          ...featureFlags,
-          $session_id : sessionId,
-          $configured_session_timeout_ms: sessionTimeoutMs,
-          $window_id: windowId,
-          ...{
-            ...initProperties,
-            ...(anonymous == true && {
-              customer: undefined,
-              purchasingCompany: undefined,
-            }),
-          },
-          client_id: event.clientId,
-          form: event.data.element.elements,
-          form_body: formBody,
-          action: event.data.element.action,
-          ...(email &&
-            anonymous == false && {
-              $set: {
-                email: email,
-              },
-            }),
-          ...resolveEventEcommerceSpecBody(event)
-        },
+        ...(uuid ? { uuid: uuid } : {}), 
       });
+      console.log({email, distinctId})
+      if (email && anonymous == false && distinctId != email) {
+        await setDistinctId(email)
+        await posthog.identify(email)
+      }
     })
+
+    
   );
 });
