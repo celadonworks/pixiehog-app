@@ -26,7 +26,6 @@ register(async (extensionApi) => {
    * Web Pixel settings can only be strings
    */
   const posthogEcommerceSpecEnabled = String(settings?.posthog_ecommerce_spec || '') == 'true'
-  console.log({posthogEcommerceSpecEnabled})
   const possibleEvents: (keyof PixelEvents)[] = [
     'cart_viewed',
     'checkout_address_info_submitted',
@@ -196,7 +195,6 @@ register(async (extensionApi) => {
         }, {} as Record<string, any>))
       }
     } catch (error) {
-      console.error(error)
       return {}
     }
   }
@@ -254,7 +252,6 @@ register(async (extensionApi) => {
     try {
       return UAParser(init.context.navigator.userAgent);
     } catch (error) {
-      console.error(error)
       return null
     }
   })();
@@ -262,7 +259,6 @@ register(async (extensionApi) => {
     try {
       return new URL(init.context.document.location.href);
     } catch (error) {
-      console.error(error)
       return null
     }
   })();
@@ -273,7 +269,6 @@ register(async (extensionApi) => {
       }
       return new URL(init.context.document.referrer);
     } catch (error) {
-      console.error(error)
       return null
     }
   })();
@@ -355,17 +350,14 @@ register(async (extensionApi) => {
   }
 
   const resolveEventEcommerceSpecBody = (event: PixelEvents[keyof PixelEvents]) => {
-    console.log({posthogEcommerceSpecEnabled, event})
     if (!posthogEcommerceSpecEnabled) {
       return {};
     }
     const transformer = webPixelToPostHogEcommerceSpecTransformerMap[event.name]
-    console.log({transformer})
     if (!transformer) {
       return {}
     }
     const transformed = transformer(init.data.shop, event)
-    console.log({transformed})
 
     return transformed;
 
@@ -426,7 +418,6 @@ register(async (extensionApi) => {
         });
 
         const email = event.data.checkout.email
-        console.log({email, distinctId, anonymous})
         if (email && anonymous == false && distinctId != email) {
           await setDistinctId(email)
           await posthog.identify(email)
@@ -510,8 +501,6 @@ register(async (extensionApi) => {
   activeEvents.includes('page_viewed') && analytics.subscribe(
     'page_viewed',
     preprocessEvent(async (event, uuid, anonymous) => {
-      console.log({eventreferINit:  init.context.document.referrer})
-      console.log({referEvent:  event.context.document.referrer})
       const distinctId = await resolveDistinctId();
       const {sessionId,windowId} = await resolveSessionId()
       const eventName = resolveEventEcommerceName(event.name);
@@ -709,7 +698,6 @@ register(async (extensionApi) => {
         timestamp: new Date(event.timestamp),
         ...(uuid ? { uuid: uuid } : {}), 
       });
-      console.log({email, distinctId})
       if (email && anonymous == false && distinctId != email) {
         await setDistinctId(email)
         await posthog.identify(email)
