@@ -3,9 +3,10 @@ export const JsWebPosthogConfigSchema = z.object({
   /* api_host: z.string().describe('URL of your PostHog instance.').trim().url().nullish().default(''), */
 
   ui_host: z
-    .enum(['https://us.posthog.com', 'https://eu.posthog.com'])
+    .string()
+    .url()
     .describe(
-      `If using a reverse proxy for 'api_host' then this should be the actual PostHog app URL (e.g. https://us.posthog.com). This ensures that links to PostHog point to the correct host.`
+      `If using a reverse proxy for 'api_host' then this should be the actual PostHog app URL (e.g. https://us.posthog.com, https://eu.posthog.com). This ensures that links to PostHog point to the correct host. If using a self-hosted PostHog instance, provide your custom URL here.`
     )
     .nullable()
     .default("https://us.posthog.com"),
@@ -134,14 +135,14 @@ export const JsWebPosthogConfigSchema = z.object({
 
   // the following will not be implemented
   /**
-   * 
+   *
   sanitize_properties: z.unknown().transform(() => null),
   loaded: z.unknown().transform(() => null),
   bootstrap: z.unknown().transform(() => null),
   session_recording: z.unknown().transform(() => null),
   xhr_headers: z.unknown().transform(() => null),
   autocapture: z.unknown().transform(() => null),
-  
+
   'autocapture.url_allowlist': z
     .array(z.string().trim())
     .describe(
