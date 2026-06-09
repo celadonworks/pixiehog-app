@@ -11,6 +11,7 @@ import { getSearchEngine } from './utils';
 import { PixieHogPostHog } from './pixiehog-posthog';
 import { webPixelToPostHogEcommerceSpecTransformerMap } from './posthog-ecommerce-spec/transformer-map';
 import { webPixelToPostHogEcommerceSpecMap } from './posthog-ecommerce-spec/event-map';
+import { getCheckoutPersonProperties, getStorefrontPostHogDistinctId } from './storefront-identity';
 type JsonType = string | number | boolean | null | { [key: string]: JsonType } | Array<JsonType> | JsonType[]
 
 register(async (extensionApi) => {
@@ -72,7 +73,21 @@ register(async (extensionApi) => {
     const webPostHogPersistedString = await localStorage.getItem(POSTHOG_KEY);
     return webPostHogPersistedString
   }
-  async function resolveDistinctId(): Promise<string> {
+
+  const setDistinctId = async (str: string) => {
+    const webPostHogPersistedString = await getPostHogLocalStorage()
+    const webPostHogPersisted: {
+      distinct_id: string;
+    } | null = webPostHogPersistedString ? JSON.parse(webPostHogPersistedString) : {};
+    await localStorage.setItem(POSTHOG_KEY, JSON.stringify({...webPostHogPersisted, distinct_id: str }));
+  }
+
+  async function resolveDistinctId(preferredDistinctId?: string): Promise<string> {
+    if (preferredDistinctId) {
+      await setDistinctId(preferredDistinctId);
+      return preferredDistinctId;
+    }
+
     const webPostHogPersistedString = await getPostHogLocalStorage()
     const webPostHogPersisted: {
       distinct_id: string;
@@ -168,7 +183,8 @@ register(async (extensionApi) => {
     await localStorage.setItem(POSTHOG_KEY, JSON.stringify({ distinct_id }));
   }
 
-  const globalDistinctId = await resolveDistinctId()
+  const initialStorefrontDistinctId = getStorefrontPostHogDistinctId(init.data.cart)
+  const globalDistinctId = await resolveDistinctId(initialStorefrontDistinctId)
   const posthog = new PixieHogPostHog(posthog_api_key, {
     host: posthog_api_host,
     persistence: 'memory',
@@ -176,7 +192,7 @@ register(async (extensionApi) => {
     flushInterval: 100,
     bootstrap: {
       distinctId: globalDistinctId,
-      isIdentifiedId: false,
+      isIdentifiedId: Boolean(initialStorefrontDistinctId),
     },
   });
 
@@ -325,15 +341,14 @@ register(async (extensionApi) => {
     ...lastTouchCampaignParams,
   } as const;
 
-  const setDistinctId = async (str: string) => {
-    const webPostHogPersistedString = await getPostHogLocalStorage()
-    const webPostHogPersisted: {
-      distinct_id: string;
-    } | null = webPostHogPersistedString ? JSON.parse(webPostHogPersistedString) : {};
-    await localStorage.setItem(POSTHOG_KEY, JSON.stringify({...webPostHogPersisted, distinct_id: str }));
-  }
+  const initialPersonProperties =
+    init.data.customer?.email
+      ? { ...init.data.customer, email: init.data.customer.email }
+      : undefined
 
-  if (init.data.customer?.email && anonymous == false && globalDistinctId != init.data.customer.email) {
+  if (initialStorefrontDistinctId && initialPersonProperties && anonymous == false) {
+    await posthog.identify(initialStorefrontDistinctId, initialPersonProperties)
+  } else if (init.data.customer?.email && anonymous == false && globalDistinctId != init.data.customer.email) {
     await setDistinctId(init.data.customer?.email)
     await posthog.identify(init.data.customer?.email)
   }
@@ -378,9 +393,16 @@ register(async (extensionApi) => {
     analytics.subscribe(
       key,
       preprocessEvent(async (event, uuid, anonymous) => {
-        const distinctId = await resolveDistinctId();
+        const checkoutStorefrontDistinctId = getStorefrontPostHogDistinctId(event.data.checkout)
+        const distinctId = await resolveDistinctId(checkoutStorefrontDistinctId);
         const {sessionId,windowId} = await resolveSessionId();
         const eventName = resolveEventEcommerceName(event.name);
+        const checkoutPersonProperties = getCheckoutPersonProperties(event.data.checkout)
+
+        if (checkoutStorefrontDistinctId && anonymous == false) {
+          await posthog.identify(checkoutStorefrontDistinctId, checkoutPersonProperties)
+        }
+
         await posthog.captureStatelessPublic(distinctId, eventName, {
           ...featureFlags,
           ...initProperties,
@@ -418,7 +440,7 @@ register(async (extensionApi) => {
         });
 
         const email = event.data.checkout.email
-        if (email && anonymous == false && distinctId != email) {
+        if (!checkoutStorefrontDistinctId && email && anonymous == false && distinctId != email) {
           await setDistinctId(email)
           await posthog.identify(email)
         }
