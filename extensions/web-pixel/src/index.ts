@@ -11,6 +11,7 @@ import { getSearchEngine } from './utils';
 import { PixieHogPostHog } from './pixiehog-posthog';
 import { webPixelToPostHogEcommerceSpecTransformerMap } from './posthog-ecommerce-spec/transformer-map';
 import { webPixelToPostHogEcommerceSpecMap } from './posthog-ecommerce-spec/event-map';
+import { customerEventProperties } from './customer-properties';
 type JsonType = string | number | boolean | null | { [key: string]: JsonType } | Array<JsonType> | JsonType[]
 
 register(async (extensionApi) => {
@@ -293,13 +294,13 @@ register(async (extensionApi) => {
     /** how to calculate active_feature_flags */
     //$active_feature_flags: null,
     shop: init.data.shop as any,
-    ...(init.data.customer as any),
+    ...customerEventProperties(init.data.customer, anonymous),
     // this might be out of date if the store uses side-cart
     ...(init.data.cart as any),
     //https://posthog.com/docs/product-analytics/person-properties
     $set: {
       ...lastTouchCampaignParams,
-      ...init.data.customer as any,
+      ...customerEventProperties(init.data.customer, anonymous),
       $browser: userAgent?.browser.name || null,
       $browser_version: userAgent?.browser.version || null,
       $os: userAgent?.os.name || null,
