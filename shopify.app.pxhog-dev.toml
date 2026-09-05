@@ -1,10 +1,32 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "0f1bffe9ed74227f1e5eb6298ce5fdbc"
-name = "Pxhog - Dev"
-handle = "pxhog-dev"
 application_url = "https://textbooks-miracle-determining-two.trycloudflare.com"
 embedded = true
+name = "Pxhog - Dev"
+handle = "pxhog-dev"
+
+[webhooks]
+api_version = "2024-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/data_request"
+  compliance_topics = [ "customers/data_request" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/redact"
+  compliance_topics = [ "customers/redact" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/shop/redact"
+  compliance_topics = [ "shop/redact" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+[pos]
+embedded = false
 
 [access.admin]
 direct_api_mode = "online"
@@ -20,31 +42,3 @@ redirect_urls = [
   "https://textbooks-miracle-determining-two.trycloudflare.com/auth/shopify/callback",
   "https://textbooks-miracle-determining-two.trycloudflare.com/api/auth/callback"
 ]
-
-[webhooks]
-api_version = "2024-10"
-
-[[webhooks.subscriptions]]
-topics = [ "app/uninstalled" ]
-uri = "/webhooks/app/uninstalled"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "customers/redact" ]
-uri = "/webhooks/customers/redact"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "customers/data_request"]
-uri = "/webhooks/customers/data_request"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "shop/redact" ]
-uri = "/webhooks/shop/redact"
-
-
-[pos]
-embedded = false
-
-[build]
-dev_store_url = "celadonworksdev.myshopify.com"
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true

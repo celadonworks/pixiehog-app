@@ -1,13 +1,32 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "dccee050afcd89238a3d924aa7608d5c"
+application_url = "https://app.pixiehog.com"
+embedded = true
 name = "PixieHog"
 handle = "pixiehog"
-application_url = "https://app.pxhog.com"
-embedded = true
 
-[build]
-include_config_on_deploy = true
+[webhooks]
+api_version = "2024-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/data_request"
+  compliance_topics = [ "customers/data_request" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/customers/redact"
+  compliance_topics = [ "customers/redact" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/shop/redact"
+  compliance_topics = [ "shop/redact" ]
+
+[pos]
+embedded = false
 
 [access.admin]
 direct_api_mode = "online"
@@ -19,30 +38,7 @@ scopes = "read_customer_events,read_themes,write_pixels"
 
 [auth]
 redirect_urls = [
-  "https://app.pxhog.com/auth/callback",
-  "https://app.pxhog.com/auth/shopify/callback",
-  "https://app.pxhog.com/api/auth/callback"
+  "https://app.pixiehog.com/auth/callback",
+  "https://app.pixiehog.com/auth/shopify/callback",
+  "https://app.pixiehog.com/api/auth/callback"
 ]
-
-[webhooks]
-api_version = "2024-10"
-
-[[webhooks.subscriptions]]
-topics = [ "app/uninstalled" ]
-uri = "/webhooks/app/uninstalled"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "customers/redact" ]
-uri = "/webhooks/customers/redact"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "customers/data_request"]
-uri = "/webhooks/customers/data_request"
-
-[[webhooks.subscriptions]]
-compliance_topics = [ "shop/redact" ]
-uri = "/webhooks/shop/redact"
-
-
-[pos]
-embedded = false
