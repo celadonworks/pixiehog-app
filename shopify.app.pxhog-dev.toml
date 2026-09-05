@@ -42,3 +42,6 @@ redirect_urls = [
   "https://textbooks-miracle-determining-two.trycloudflare.com/auth/shopify/callback",
   "https://textbooks-miracle-determining-two.trycloudflare.com/api/auth/callback"
 ]
+
+[build]
+automatically_update_urls_on_dev = true
