@@ -422,7 +422,7 @@ export default function Index() {
                     <TextField
                       label="PostHog Project API Key"
                       error={posthogApiKeyError}
-                      labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pxhog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
+                      labelAction= {{content: 'Where is my API key ?', url: urlWithShopParam(`https://pixiehog.com/docs/getting-started#3-project-api-key-setup`, shop), target:'_blank'}}
                       inputMode='text'
                       value={PostHogApiKey}
                       onChange={handleApiKeyChange}
@@ -433,7 +433,7 @@ export default function Index() {
                   <Select
                     label="API Host"
                     error={posthogApiHostError}
-                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
+                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pixiehog.com/faqs/what-is-posthog-api-host`, shop), target:'_blank'}}
                     options={apiHostOptions}
                     onChange={handlePosthogApiHostChange}
                     value={posthogApiHost}
@@ -443,7 +443,7 @@ export default function Index() {
                     <TextField
                     label="Custom Reverse Proxy"
                     error={posthogCustomApiHostError}
-                    labelAction= {{content: 'What is this , and how do I configure it ?', url:urlWithShopParam(`https://pxhog.com/faqs/what-is-custom-reverse-proxy`, shop), target:'_blank'}}
+                    labelAction= {{content: 'What is this , and how do I configure it ?', url:urlWithShopParam(`https://pixiehog.com/faqs/what-is-custom-reverse-proxy`, shop), target:'_blank'}}
                     inputMode='url'
                     type='url'
                     placeholder='https://example.com'
@@ -455,7 +455,7 @@ export default function Index() {
 
                   <Select
                     label="Data Collection Strategy"
-                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pxhog.com/docs/data-collection-strategies`, shop), target:'_blank'}}
+                    labelAction= {{content: 'What is this ?', url:urlWithShopParam(`https://pixiehog.com/docs/data-collection-strategies`, shop), target:'_blank'}}
                     options={[
                       { label: "Anonymized", value:"anonymized"},
                       { label: "Identified By Consent", value:"non-anonymized-by-consent"},
@@ -468,7 +468,7 @@ export default function Index() {
                   {
                     dataCollectionStrategy === 'non-anonymized' && 
                     (
-                      <Banner tone="warning" >This option <strong>bypasses customer privacy preferences</strong>. <Link url={urlWithShopParam(`https://pxhog.com/docs/data-collection-strategies#3-identified`, shop)} target='_blank'>Read more.</Link></Banner>
+                      <Banner tone="warning" >This option <strong>bypasses customer privacy preferences</strong>. <Link url={urlWithShopParam(`https://pixiehog.com/docs/data-collection-strategies#3-identified`, shop)} target='_blank'>Read more.</Link></Banner>
                     )
                   }
                   
