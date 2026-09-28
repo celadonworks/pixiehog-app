@@ -9,7 +9,12 @@ export const JsWebPosthogConfigSchema = z.object({
     )
     .nullable()
     .default("https://us.posthog.com"),
-
+  autocapture: z
+    .boolean()
+    .describe(
+      `Determines if PostHog should autocapture events. This setting does not affect capturing pageview events (see capture_pageview)`
+    )
+    .default(false),
   // set app's default to false because web pixel is recommended
   capture_pageview: z
     .boolean()
