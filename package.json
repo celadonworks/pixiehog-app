@@ -22,19 +22,20 @@
   },
   "type": "module",
   "engines": {
-    "node": "^18.20 || ^20.10 || >=21.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
-    "@prisma/client": "^5.21.1",
-    "@remix-run/dev": "^2.13.1",
-    "@remix-run/node": "^2.13.1",
-    "@remix-run/react": "^2.13.1",
-    "@remix-run/serve": "^2.13.1",
+    "@prisma/client": "^6.19.3",
+    "@remix-run/dev": "^2.17.5",
+    "@remix-run/node": "^2.17.5",
+    "@remix-run/react": "^2.17.5",
+    "@remix-run/serve": "^2.17.5",
     "@shopify/app-bridge-react": "^4.1.5",
     "@shopify/polaris": "^13.9.1",
     "@shopify/react-form": "^2.7.3",
-    "@shopify/shopify-app-remix": "^3.4.0",
-    "@shopify/shopify-app-session-storage-prisma": "^5.1.5",
+    "@shopify/shopify-api": "^15.1.2",
+    "@shopify/shopify-app-remix": "^6.0.6",
+    "@shopify/shopify-app-session-storage-prisma": "^11.0.4",
     "@types/uuid": "^10.0.0",
     "deep-object-diff": "^1.1.9",
     "delay": "^6.0.0",
@@ -45,7 +46,7 @@
     "p-queue": "^8.0.1",
     "posthog-js": "^1.280.1",
     "posthog-js-lite": "^4.1.6",
-    "prisma": "^5.21.1",
+    "prisma": "^6.19.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "serialize-error": "^11.0.3",
@@ -64,7 +65,7 @@
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3",
-    "vite": "^5.4.10"
+    "vite": "^6.4.6"
   },
   "workspaces": [
     "extensions/*"

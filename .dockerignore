@@ -1,4 +1,10 @@
 .cache
 build
 node_modules
+.git
+.aws
+.shopify
+.local-db
+.env
+.env.*
 .envrc
