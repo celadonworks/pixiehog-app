@@ -123,29 +123,30 @@
                 (e.__SV = 1));
             })(document, window.posthog || []);
 
-            const shopifyConsentLoaded = await new Promise((resolve) => {
+            const hasPrivacyApi = () =>
+                typeof window.Shopify?.customerPrivacy?.analyticsProcessingAllowed === 'function';
+
+            await (hasPrivacyApi() || new Promise((resolve, reject) => {
                 window.Shopify.loadFeatures(
                     [
                       {
                         name: 'consent-tracking-api',
-                        version: '0.1',
+                        version: '1.0',
                       },
                     ],
                     error => {
-                      if (error) {
-                        console.error(error);
-                        resolve(false)
+                      if (!hasPrivacyApi()) {
+                        reject(new Error(
+                            '[pxhog] failed to obtain customer privacy settings',
+                            { cause: error }
+                        ));
                         return;
                       }
                       resolve(true)
                       return;
                     },
                 );
-            });
-
-            if (!shopifyConsentLoaded) {
-                throw new Error('[pxhog] failed to obtain customer privacy settings')
-            }
+            }));
             
             const hasNewDistinctId = recalculateAnonymous()
          
