@@ -123,29 +123,59 @@
                 (e.__SV = 1));
             })(document, window.posthog || []);
 
+            if (document.readyState !== 'complete') {
+                await new Promise(resolve => {
+                    window.addEventListener('load', resolve, { once: true });
+                });
+            }
+
             const hasPrivacyApi = () =>
                 typeof window.Shopify?.customerPrivacy?.analyticsProcessingAllowed === 'function';
 
-            await (hasPrivacyApi() || new Promise((resolve, reject) => {
-                window.Shopify.loadFeatures(
-                    [
-                      {
-                        name: 'consent-tracking-api',
-                        version: '1.0',
-                      },
-                    ],
-                    error => {
-                      if (!hasPrivacyApi()) {
-                        reject(new Error(
-                            '[pxhog] failed to obtain customer privacy settings',
-                            { cause: error }
-                        ));
+            await (hasPrivacyApi() || new Promise((resolve) => {
+                let requested = false;
+                let loadError;
+
+                function check() {
+                    if (hasPrivacyApi()) {
+                        clearTimeout(timeout);
+                        document.removeEventListener('load', check, true);
+                        document.removeEventListener('DOMContentLoaded', check);
+                        document.removeEventListener('visitorConsentCollected', check);
+                        resolve();
                         return;
-                      }
-                      resolve(true)
-                      return;
-                    },
-                );
+                    }
+                    if (requested || typeof window.Shopify?.loadFeatures !== 'function') return;
+                    requested = true;
+                    try {
+                        window.Shopify.loadFeatures(
+                            [
+                              {
+                                name: 'consent-tracking-api',
+                                version: '1.0',
+                              },
+                            ],
+                            error => {
+                              loadError = error;
+                              check();
+                            },
+                        );
+                    } catch (error) {
+                        loadError = error;
+                    }
+                }
+
+                // Another app's consent script may still be loading after a version conflict.
+                const timeout = setTimeout(() => {
+                    console.error(new Error(
+                        '[pxhog] customer privacy API unavailable after 10 seconds; waiting for a later load or consent change',
+                        { cause: loadError }
+                    ));
+                }, 10000);
+                document.addEventListener('load', check, true);
+                document.addEventListener('DOMContentLoaded', check);
+                document.addEventListener('visitorConsentCollected', check);
+                check();
             }));
             
             const hasNewDistinctId = recalculateAnonymous()
